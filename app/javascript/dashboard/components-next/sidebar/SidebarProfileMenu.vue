@@ -29,10 +29,15 @@ const { t } = useI18n();
 
 const currentUser = useMapGetter('getCurrentUser');
 const currentUserAvailability = useMapGetter('getCurrentUserAvailability');
+const currentRole = useMapGetter('getCurrentRole');
 const accountId = useMapGetter('getCurrentAccountId');
 const globalConfig = useMapGetter('globalConfig/get');
 const isFeatureEnabledonAccount = useMapGetter(
   'accounts/isFeatureEnabledonAccount'
+);
+
+const hasSimpleAgentExperience = computed(() =>
+  ['agent', 'custom_role'].includes(currentRole.value)
 );
 
 const showChatSupport = computed(() => {
@@ -82,7 +87,7 @@ const menuItems = computed(() => {
       },
     },
     {
-      show: true,
+      show: !hasSimpleAgentExperience.value,
       showOnCustomBrandedInstance: false,
       label: t('SIDEBAR_ITEMS.DOCS'),
       icon: 'i-lucide-book',
