@@ -98,8 +98,12 @@ export default {
     ...mapGetters({
       currentUser: 'getCurrentUser',
       currentUserId: 'getCurrentUserID',
+      currentRole: 'getCurrentRole',
       globalConfig: 'globalConfig/get',
     }),
+    isAgentProfileSimplified() {
+      return ['agent', 'custom_role'].includes(this.currentRole);
+    },
     isMfaEnabled() {
       return parseBoolean(window.chatwootConfig?.isMfaEnabled);
     },
@@ -225,6 +229,7 @@ export default {
       </div>
     </SectionLayout>
     <SectionLayout
+      v-if="!isAgentProfileSimplified"
       with-border
       :title="$t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.TITLE')"
       :description="
@@ -251,6 +256,7 @@ export default {
       </div>
     </SectionLayout>
     <SectionLayout
+      v-if="!isAgentProfileSimplified"
       with-border
       :title="$t('PROFILE_SETTINGS.FORM.MESSAGE_SIGNATURE_SECTION.TITLE')"
       :description="$t('PROFILE_SETTINGS.FORM.MESSAGE_SIGNATURE_SECTION.NOTE')"
@@ -261,6 +267,7 @@ export default {
       />
     </SectionLayout>
     <SectionLayout
+      v-if="!isAgentProfileSimplified"
       with-border
       :title="$t('PROFILE_SETTINGS.FORM.SEND_MESSAGE.TITLE')"
       :description="$t('PROFILE_SETTINGS.FORM.SEND_MESSAGE.NOTE')"
@@ -299,14 +306,17 @@ export default {
       <ChangePassword />
     </SectionLayout>
     <SectionLayout
-      v-if="isMfaEnabled"
+      v-if="isMfaEnabled && !isAgentProfileSimplified"
       with-border
       :title="$t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.TITLE')"
       :description="$t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.NOTE')"
     >
       <MfaSettingsCard />
     </SectionLayout>
-    <Policy :permissions="audioNotificationPermissions">
+    <Policy
+      v-if="!isAgentProfileSimplified"
+      :permissions="audioNotificationPermissions"
+    >
       <SectionLayout
         with-border
         :title="$t('PROFILE_SETTINGS.FORM.AUDIO_NOTIFICATIONS_SECTION.TITLE')"
@@ -317,7 +327,10 @@ export default {
         <AudioNotifications />
       </SectionLayout>
     </Policy>
-    <Policy :permissions="notificationPermissions">
+    <Policy
+      v-if="!isAgentProfileSimplified"
+      :permissions="notificationPermissions"
+    >
       <SectionLayout
         with-border
         :title="$t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.TITLE')"
@@ -327,6 +340,7 @@ export default {
       </SectionLayout>
     </Policy>
     <SectionLayout
+      v-if="!isAgentProfileSimplified"
       with-border
       :title="$t('PROFILE_SETTINGS.FORM.ACCESS_TOKEN.TITLE')"
       :description="
