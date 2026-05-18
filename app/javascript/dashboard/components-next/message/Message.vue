@@ -380,6 +380,14 @@ const contextMenuEnabledOptions = computed(() => {
       (hasText || hasAttachments) &&
       !isFailedOrProcessing &&
       !isMessageDeleted.value,
+    edit:
+      isOutgoing &&
+      hasText &&
+      !hasAttachments &&
+      props.contentType === CONTENT_TYPES.TEXT &&
+      !props.private &&
+      !isFailedOrProcessing &&
+      !isMessageDeleted.value,
     cannedResponse: isOutgoing && hasText && !isMessageDeleted.value,
     copyLink: !isFailedOrProcessing,
     translate: !isFailedOrProcessing && !isMessageDeleted.value && hasText,
@@ -519,7 +527,7 @@ provideMessageContext({
   <div
     v-if="shouldRenderMessage"
     :id="`message${props.id}`"
-    class="flex w-full mb-2 message-bubble-container"
+    class="flex w-full mb-2 message-bubble-container group/message"
     :data-message-id="props.id"
     :class="[
       flexOrientationClass,
@@ -579,7 +587,6 @@ provideMessageContext({
         :is-open="showContextMenu"
         :enabled-options="contextMenuEnabledOptions"
         :message="payloadForContextMenu"
-        hide-button
         @open="openContextMenu"
         @close="closeContextMenu"
         @reply-to="handleReplyTo"

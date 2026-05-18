@@ -922,7 +922,7 @@ watch(conversationFilters, (newVal, oldVal) => {
 
 <template>
   <div
-    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-n-surface-1 relative"
+    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-[#fffaf4] dark:bg-[#17120f] relative overflow-hidden rounded-3xl border border-[#ead8c7] shadow-sm"
     :class="[
       { hidden: !showConversationList },
       isOnExpandedLayout ? 'basis-full' : 'w-[340px] 2xl:w-[412px]',
@@ -973,7 +973,7 @@ watch(conversationFilters, (newVal, oldVal) => {
       @chat-tab-change="updateAssigneeTab"
     />
 
-    <div class="flex items-center gap-2 px-3 py-2">
+    <div class="flex items-center gap-2 px-4 py-3 bg-[#fffaf4] dark:bg-[#17120f]">
       <div class="relative flex-1 min-w-0">
         <span
           class="absolute -translate-y-1/2 i-lucide-search left-3 rtl:left-auto rtl:right-3 top-1/2 size-4 text-n-slate-10"
@@ -981,7 +981,7 @@ watch(conversationFilters, (newVal, oldVal) => {
         <input
           v-model="searchQuery"
           type="search"
-          class="w-full h-8 px-3 ltr:pl-9 rtl:pr-9 text-sm rounded-lg outline outline-1 outline-n-weak bg-n-alpha-2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-n-brand"
+          class="w-full h-10 px-3 ltr:pl-9 rtl:pr-9 text-sm rounded-full outline outline-1 outline-[#ead8c7] bg-white dark:bg-[#211712] text-[#17120f] dark:text-[#fffaf4] placeholder:text-[#9b8b7b] focus:outline-[#ff5b00]"
           :placeholder="$t('CHAT_LIST.SEARCH.INPUT')"
         />
       </div>

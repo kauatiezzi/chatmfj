@@ -20,13 +20,13 @@ const { variant, orientation, inReplyTo, shouldGroupWithNext } =
 const { t } = useI18n();
 
 const varaintBaseMap = {
-  [MESSAGE_VARIANTS.AGENT]: 'bg-n-solid-blue text-n-slate-12',
+  [MESSAGE_VARIANTS.AGENT]: 'bg-[#ff6a00] text-white shadow-sm',
   [MESSAGE_VARIANTS.PRIVATE]:
-    'bg-n-solid-amber text-n-amber-12 [&_.prosemirror-mention-node]:font-semibold',
-  [MESSAGE_VARIANTS.USER]: 'bg-n-slate-4 text-n-slate-12',
+    'bg-[#fff4cf] text-[#4b3320] [&_.prosemirror-mention-node]:font-semibold',
+  [MESSAGE_VARIANTS.USER]: 'bg-[#fffaf4] text-[#17120f] shadow-sm',
   [MESSAGE_VARIANTS.ACTIVITY]: 'bg-n-alpha-1 text-n-slate-11 text-sm',
-  [MESSAGE_VARIANTS.BOT]: 'bg-n-solid-iris text-n-slate-12',
-  [MESSAGE_VARIANTS.TEMPLATE]: 'bg-n-solid-iris text-n-slate-12',
+  [MESSAGE_VARIANTS.BOT]: 'bg-[#1f1a16] text-white shadow-sm',
+  [MESSAGE_VARIANTS.TEMPLATE]: 'bg-[#1f1a16] text-white shadow-sm',
   [MESSAGE_VARIANTS.ERROR]: 'bg-n-ruby-4 text-n-ruby-12',
   [MESSAGE_VARIANTS.EMAIL]: 'w-full',
   [MESSAGE_VARIANTS.UNSUPPORTED]:

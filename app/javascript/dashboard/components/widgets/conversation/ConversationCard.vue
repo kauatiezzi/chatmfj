@@ -102,11 +102,11 @@ watch(
 
 <template>
   <div
-    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border-b border-n-slate-3 hover:border-n-surface-1 hover:bg-n-alpha-1 dark:hover:bg-n-alpha-3 group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-n-surface-1 before:pointer-events-none hover:before:content-['']"
+    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border-b border-[#f0dfcf] hover:bg-[#fff0e1] dark:hover:bg-[#241812] group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-[#fffaf4] before:pointer-events-none hover:before:content-['']"
     :class="{
-      'active animate-card-select bg-n-background !border-n-surface-1':
+      'active animate-card-select bg-[#fff0e1] dark:bg-[#241812] !border-[#ff5b00]/25':
         isActiveChat,
-      'selected bg-n-slate-2 !border-n-surface-1': selected,
+      'selected bg-[#fff5ec] dark:bg-[#211712] !border-[#ff5b00]/25': selected,
       'px-0': compact,
       'px-3': !compact,
     }"
@@ -169,7 +169,7 @@ watch(
         </div>
       </div>
       <h4
-        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-n-slate-12"
+        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-[#17120f] dark:text-[#fffaf4]"
         :class="hasUnread ? 'font-semibold' : 'font-medium'"
       >
         {{ currentContact.name }}

@@ -107,7 +107,7 @@ const copyConversationId = async () => {
 <template>
   <div
     ref="conversationHeader"
-    class="flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-12"
+    class="flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-4 pt-3 pb-2 h-24 xl:h-16 bg-[#fffaf4] dark:bg-[#17120f] border-b border-[#ead8c7]"
   >
     <div
       class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1"
@@ -130,7 +130,7 @@ const copyConversationId = async () => {
       >
         <div class="flex flex-row items-center max-w-full gap-1 p-0 m-0">
           <span
-            class="text-sm font-medium truncate leading-tight text-n-slate-12"
+            class="text-sm font-semibold truncate leading-tight text-[#17120f] dark:text-[#fffaf4]"
           >
             {{ currentContact.name }}
           </span>
@@ -148,7 +148,7 @@ const copyConversationId = async () => {
         >
           <button
             type="button"
-            class="truncate text-label-small text-n-slate-11 hover:text-n-slate-12 !p-0 cucursor-pointer"
+            class="truncate text-label-small text-[#7c6f64] hover:text-[#ff5b00] !p-0 cursor-pointer"
             @click="copyConversationId"
           >
             {{ `#${chat.id}` }}

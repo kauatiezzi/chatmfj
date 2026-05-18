@@ -132,10 +132,13 @@ const statusToShow = computed(() => {
 </script>
 
 <template>
-  <div class="text-xs flex items-center gap-1.5">
+  <div class="text-xs flex items-center gap-1.5 opacity-80">
     <div class="inline">
       <time class="inline">{{ readableTime }}</time>
     </div>
+    <span v-if="contentAttributes?.edited">
+      {{ $t('CONVERSATION.CONTEXT_MENU.EDITED') }}
+    </span>
     <Icon v-if="isPrivate" icon="i-lucide-lock-keyhole" class="size-3" />
     <MessageStatus v-if="showStatusIndicator" :status="statusToShow" />
   </div>
