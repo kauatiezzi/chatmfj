@@ -136,9 +136,6 @@ const statusToShow = computed(() => {
     <div class="inline">
       <time class="inline">{{ readableTime }}</time>
     </div>
-    <span v-if="contentAttributes?.edited">
-      {{ $t('CONVERSATION.CONTEXT_MENU.EDITED') }}
-    </span>
     <Icon v-if="isPrivate" icon="i-lucide-lock-keyhole" class="size-3" />
     <MessageStatus v-if="showStatusIndicator" :status="statusToShow" />
   </div>

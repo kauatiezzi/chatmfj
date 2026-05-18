@@ -1,5 +1,5 @@
 class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::Conversations::BaseController
-  before_action :ensure_api_inbox, only: :update, if: -> { permitted_params[:status].present? }
+  before_action :ensure_api_inbox, only: :update
 
   def index
     @messages = message_finder.perform
@@ -14,8 +14,6 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def update
-    return update_content if permitted_params.key?(:content)
-
     Messages::StatusUpdateService.new(message, permitted_params[:status], permitted_params[:external_error]).perform
     @message = message
   end
@@ -67,17 +65,7 @@ class Api::V1::Accounts::Conversations::MessagesController < Api::V1::Accounts::
   end
 
   def permitted_params
-    params.permit(:id, :target_language, :status, :external_error, :content)
-  end
-
-  def update_content
-    return head :forbidden unless message.outgoing? && message.text? && !message.deleted?
-
-    content = permitted_params[:content].to_s.strip
-    return head :unprocessable_entity if content.blank?
-
-    message.update!(content: content, content_attributes: message.content_attributes.merge('edited' => true))
-    @message = message
+    params.permit(:id, :target_language, :status, :external_error)
   end
 
   def already_translated_content_available?

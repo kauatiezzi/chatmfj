@@ -56,9 +56,6 @@ export default {
     return {
       isCannedResponseModalOpen: false,
       showDeleteModal: false,
-      showEditModal: false,
-      editedContent: '',
-      isUpdatingMessage: false,
     };
   },
   computed: {
@@ -82,12 +79,6 @@ export default {
     contentAttributes() {
       return useSnakeCase(
         this.message.content_attributes ?? this.message.contentAttributes
-      );
-    },
-    canSaveEditedMessage() {
-      return !!(
-        this.editedContent.trim() &&
-        this.editedContent.trim() !== this.messageContent.trim()
       );
     },
   },
@@ -146,35 +137,6 @@ export default {
       this.handleClose();
       this.showDeleteModal = true;
     },
-    openEditModal() {
-      this.editedContent = this.messageContent || '';
-      this.handleClose();
-      this.showEditModal = true;
-    },
-    closeEditModal() {
-      this.showEditModal = false;
-      this.editedContent = '';
-      this.isUpdatingMessage = false;
-    },
-    async confirmEdit() {
-      if (!this.canSaveEditedMessage) {
-        return;
-      }
-
-      this.isUpdatingMessage = true;
-      try {
-        await this.$store.dispatch('editMessage', {
-          conversationId: this.conversationId,
-          messageId: this.messageId,
-          content: this.editedContent,
-        });
-        useAlert(this.$t('CONVERSATION.CONTEXT_MENU.EDIT_SUCCESS'));
-        this.closeEditModal();
-      } catch (error) {
-        useAlert(this.$t('CONVERSATION.CONTEXT_MENU.EDIT_ERROR'));
-        this.isUpdatingMessage = false;
-      }
-    },
     async confirmDeletion() {
       try {
         await this.$store.dispatch('deleteMessage', {
@@ -219,38 +181,6 @@ export default {
       :confirm-text="$t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.DELETE')"
       :reject-text="$t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.CANCEL')"
     />
-    <woot-modal
-      v-if="showEditModal && enabledOptions['edit']"
-      v-model:show="showEditModal"
-      :on-close="closeEditModal"
-    >
-      <div class="flex flex-col gap-4 p-6">
-        <woot-modal-header
-          :header-title="$t('CONVERSATION.CONTEXT_MENU.EDIT')"
-        />
-        <textarea
-          v-model="editedContent"
-          class="w-full min-h-32 p-3 text-sm rounded-lg resize-y outline outline-1 outline-n-weak bg-n-background text-n-slate-12 focus:outline-n-brand"
-          :placeholder="$t('CONVERSATION.CONTEXT_MENU.EDIT_PLACEHOLDER')"
-          @keydown.meta.enter.prevent="confirmEdit"
-          @keydown.ctrl.enter.prevent="confirmEdit"
-        />
-        <div class="flex items-center justify-end gap-2">
-          <NextButton
-            slate
-            faded
-            :label="$t('CONVERSATION.CONTEXT_MENU.EDIT_CANCEL')"
-            @click="closeEditModal"
-          />
-          <NextButton
-            :label="$t('CONVERSATION.CONTEXT_MENU.EDIT_SAVE')"
-            :disabled="!canSaveEditedMessage || isUpdatingMessage"
-            :is-loading="isUpdatingMessage"
-            @click="confirmEdit"
-          />
-        </div>
-      </div>
-    </woot-modal>
     <NextButton
       v-if="!hideButton"
       ghost
@@ -284,15 +214,6 @@ export default {
           }"
           variant="icon"
           @click.stop="handleCopy"
-        />
-        <MenuItem
-          v-if="enabledOptions['edit']"
-          :option="{
-            icon: 'edit',
-            label: $t('CONVERSATION.CONTEXT_MENU.EDIT'),
-          }"
-          variant="icon"
-          @click.stop="openEditModal"
         />
         <MenuItem
           v-if="enabledOptions['translate']"
