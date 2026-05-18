@@ -22,7 +22,7 @@ const { t } = useI18n();
 const varaintBaseMap = {
   [MESSAGE_VARIANTS.AGENT]: 'bg-[#ff6a00] text-white shadow-sm',
   [MESSAGE_VARIANTS.PRIVATE]:
-    'bg-[#fff4cf] text-[#4b3320] [&_.prosemirror-mention-node]:font-semibold',
+    'bg-[#fff4cf] dark:bg-[#3a260f] text-[#4b3320] dark:text-[#ffe8b8] [&_.prosemirror-mention-node]:font-semibold',
   [MESSAGE_VARIANTS.USER]:
     'bg-[#fffaf4] dark:bg-[#211712] text-[#17120f] dark:text-[#fffaf4] shadow-sm',
   [MESSAGE_VARIANTS.ACTIVITY]: 'bg-n-alpha-1 text-n-slate-11 text-sm',
