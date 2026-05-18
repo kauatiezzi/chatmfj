@@ -17,6 +17,8 @@ import DeleteCustomViews from 'dashboard/routes/dashboard/customviews/DeleteCust
 import ConversationBulkActions from './widgets/conversation/conversationBulkActions/Index.vue';
 import TeleportWithDirection from 'dashboard/components-next/TeleportWithDirection.vue';
 import ConversationResolveAttributesModal from 'dashboard/components-next/ConversationWorkflow/ConversationResolveAttributesModal.vue';
+import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
+import NextButton from 'dashboard/components-next/button/Button.vue';
 
 import { useUISettings } from 'dashboard/composables/useUISettings';
 import { useAlert } from 'dashboard/composables';
@@ -75,6 +77,7 @@ const resolveAttributesModalRef = ref(null);
 const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
+const searchQuery = ref('');
 const showAdvancedFilters = ref(false);
 // chatsOnView is to store the chats that are currently visible on the screen,
 // which mirrors the conversationList.
@@ -337,8 +340,57 @@ const conversationList = computed(() => {
   return localConversationList;
 });
 
+function normalizeSearchText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim();
+}
+
+function collectSearchFields(source) {
+  const senderId = source.meta?.sender?.id;
+  const storedContact = senderId
+    ? store.getters['contacts/getContact'](senderId)
+    : {};
+  const sender = {
+    ...(source.meta?.sender || {}),
+    ...(storedContact || {}),
+  };
+  const latestMessage = source.messages?.[source.messages.length - 1];
+  const additionalAttributes =
+    sender.additionalAttributes || sender.additional_attributes || {};
+
+  return [
+    source.id,
+    source.display_id,
+    source.identifier,
+    source.last_message,
+    latestMessage?.content,
+    sender.id,
+    sender.name,
+    sender.email,
+    sender.phoneNumber,
+    sender.phone_number,
+    sender.identifier,
+    ...Object.values(additionalAttributes),
+  ];
+}
+
+const filteredConversationList = computed(() => {
+  const query = normalizeSearchText(searchQuery.value);
+  if (!query) {
+    return conversationList.value;
+  }
+
+  return conversationList.value.filter(source => {
+    return collectSearchFields(source)
+      .map(normalizeSearchText)
+      .some(value => value.includes(query));
+  });
+});
+
 const showEndOfListMessage = computed(() => {
   return !!(
+    !searchQuery.value &&
     conversationList.value.length &&
     hasCurrentPageEndReached.value &&
     !chatListLoading.value
@@ -347,8 +399,9 @@ const showEndOfListMessage = computed(() => {
 
 const allConversationsSelected = computed(() => {
   return (
-    conversationList.value.length === selectedConversations.value.length &&
-    conversationList.value.every(el =>
+    filteredConversationList.value.length ===
+      selectedConversations.value.length &&
+    filteredConversationList.value.every(el =>
       selectedConversations.value.includes(el.id)
     )
   );
@@ -587,6 +640,7 @@ function updateAssigneeTab(selectedTab) {
   if (activeAssigneeTab.value !== selectedTab) {
     resetBulkActions();
     emitter.emit('clearSearchInput');
+    searchQuery.value = '';
     activeAssigneeTab.value = selectedTab;
     if (!currentPage.value) {
       fetchConversations();
@@ -777,7 +831,7 @@ function allSelectedConversationsStatus(status) {
 }
 
 function toggleSelectAll(check) {
-  selectAllConversations(check, conversationList);
+  selectAllConversations(check, filteredConversationList);
 }
 
 useEmitter('fetch_conversation_stats', () => {
@@ -855,6 +909,10 @@ watch(chatLists, () => {
   chatsOnView.value = conversationList.value;
 });
 
+watch(searchQuery, () => {
+  resetBulkActions();
+});
+
 watch(conversationFilters, (newVal, oldVal) => {
   if (newVal !== oldVal) {
     store.dispatch('updateChatListFilters', newVal);
@@ -915,12 +973,60 @@ watch(conversationFilters, (newVal, oldVal) => {
       @chat-tab-change="updateAssigneeTab"
     />
 
+    <div class="flex items-center gap-2 px-3 py-2">
+      <div class="relative flex-1 min-w-0">
+        <span
+          class="absolute -translate-y-1/2 i-lucide-search left-3 rtl:left-auto rtl:right-3 top-1/2 size-4 text-n-slate-10"
+        />
+        <input
+          v-model="searchQuery"
+          type="search"
+          class="w-full h-8 px-3 ltr:pl-9 rtl:pr-9 text-sm rounded-lg outline outline-1 outline-n-weak bg-n-alpha-2 text-n-slate-12 placeholder:text-n-slate-10 focus:outline-n-brand"
+          :placeholder="$t('CHAT_LIST.SEARCH.INPUT')"
+        />
+      </div>
+      <ComposeConversation>
+        <template #trigger="{ isOpen }">
+          <NextButton
+            v-tooltip.top-end="$t('CONTACT_PANEL.NEW_MESSAGE')"
+            icon="i-lucide-plus"
+            slate
+            xs
+            faded
+            :aria-expanded="isOpen"
+          />
+        </template>
+      </ComposeConversation>
+    </div>
+
     <p
-      v-if="!chatListLoading && !conversationList.length"
-      class="flex overflow-auto justify-center items-center p-4"
+      v-if="!chatListLoading && !filteredConversationList.length && !searchQuery"
+      class="flex items-center justify-center p-4 overflow-auto"
     >
       {{ $t('CHAT_LIST.LIST.404') }}
     </p>
+    <div
+      v-else-if="
+        !chatListLoading && !filteredConversationList.length && searchQuery
+      "
+      class="flex flex-col items-center justify-center gap-3 p-4 text-center"
+    >
+      <p class="text-sm text-n-slate-11">
+        {{ $t('CONVERSATION.SEARCH.NO_MATCHING_RESULTS') }}
+      </p>
+      <ComposeConversation>
+        <template #trigger="{ isOpen }">
+          <NextButton
+            :label="$t('NEW_CONVERSATION.BUTTON_LABEL')"
+            icon="i-lucide-plus"
+            slate
+            sm
+            faded
+            :aria-expanded="isOpen"
+          />
+        </template>
+      </ComposeConversation>
+    </div>
     <ConversationBulkActions
       :conversations="selectedConversations"
       :all-conversations-selected="allConversationsSelected"
@@ -932,7 +1038,7 @@ watch(conversationFilters, (newVal, oldVal) => {
       @select-all-conversations="toggleSelectAll"
     />
     <ConversationList
-      :conversation-list="conversationList"
+      :conversation-list="filteredConversationList"
       :is-loading="chatListLoading"
       :show-end-of-list-message="showEndOfListMessage"
       :label="label"
