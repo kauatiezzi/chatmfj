@@ -2,6 +2,10 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { INPUT_TYPES } from 'dashboard/components-next/taginput/helper/tagInputHelper.js';
+import {
+  isPhoneInput,
+  normalizePhoneNumber,
+} from 'dashboard/components-next/NewConversation/helpers/composeConversationHelper';
 
 import TagInput from 'dashboard/components-next/taginput/TagInput.vue';
 import Button from 'dashboard/components-next/button/Button.vue';
@@ -52,7 +56,6 @@ const emit = defineEmits([
   'updateDropdown',
 ]);
 
-const i18nPrefix = 'COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR';
 const { t } = useI18n();
 
 const inputType = ref(INPUT_TYPES.EMAIL);
@@ -88,11 +91,22 @@ const errorClass = computed(() => {
 });
 
 const handleInput = value => {
-  // Update input type based on whether input starts with '+'
-  // If it does, set input type to 'tel'
-  // Otherwise, set input type to 'email'
-  inputType.value = value.startsWith('+') ? INPUT_TYPES.TEL : INPUT_TYPES.EMAIL;
+  if (isPhoneInput(value)) {
+    inputType.value = value.trim().startsWith('+')
+      ? INPUT_TYPES.TEL
+      : INPUT_TYPES.TEXT;
+  } else {
+    inputType.value = INPUT_TYPES.EMAIL;
+  }
   emit('searchContacts', value);
+};
+
+const handleSelectedContact = item => {
+  const normalizedItem =
+    item.action === 'create' && isPhoneInput(item.value)
+      ? { ...item, value: normalizePhoneNumber(item.value) }
+      : item;
+  emit('setSelectedContact', normalizedItem);
 };
 </script>
 
@@ -100,7 +114,7 @@ const handleInput = value => {
   <div class="relative flex-1 px-4 py-3 overflow-y-visible">
     <div class="flex items-baseline w-full gap-3 min-h-7">
       <label class="text-sm font-medium text-n-slate-11 whitespace-nowrap">
-        {{ t(`${i18nPrefix}.LABEL`) }}
+        {{ t('COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.LABEL') }}
       </label>
 
       <div
@@ -108,7 +122,9 @@ const handleInput = value => {
         class="flex items-center gap-1.5 rounded-md bg-n-alpha-2 px-3 min-h-7 min-w-0"
       >
         <span class="text-sm truncate text-n-slate-12">
-          {{ t(`${i18nPrefix}.CONTACT_CREATING`) }}
+          {{
+            t('COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.CONTACT_CREATING')
+          }}
         </span>
       </div>
       <div
@@ -119,7 +135,9 @@ const handleInput = value => {
         <span class="text-sm truncate text-n-slate-12">
           {{
             isCreatingContact
-              ? t(`${i18nPrefix}.CONTACT_CREATING`)
+              ? t(
+                  'COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.CONTACT_CREATING'
+                )
               : selectedContactLabel
           }}
         </span>
@@ -135,7 +153,11 @@ const handleInput = value => {
       </div>
       <TagInput
         v-else
-        :placeholder="t(`${i18nPrefix}.TAG_INPUT_PLACEHOLDER`)"
+        :placeholder="
+          t(
+            'COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.TAG_INPUT_PLACEHOLDER'
+          )
+        "
         mode="single"
         :menu-items="contactsList"
         :show-dropdown="showContactsDropdown"
@@ -148,7 +170,7 @@ const handleInput = value => {
         focus-on-mount
         @input="handleInput"
         @on-click-outside="emit('updateDropdown', 'contacts', false)"
-        @add="emit('setSelectedContact', $event)"
+        @add="handleSelectedContact"
         @remove="emit('clearSelectedContact')"
       />
     </div>

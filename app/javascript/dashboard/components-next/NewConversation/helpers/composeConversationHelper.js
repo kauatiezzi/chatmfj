@@ -82,6 +82,24 @@ export const getCapitalizedNameFromEmail = email => {
   return name.charAt(0).toUpperCase() + name.slice(1);
 };
 
+export const isPhoneInput = input => {
+  const normalizedInput = input.trim();
+  const digits = normalizedInput.replace(/\D/g, '');
+  return normalizedInput.startsWith('+') || digits.length >= 8;
+};
+
+export const normalizePhoneNumber = input => {
+  const normalizedInput = input.trim();
+  if (normalizedInput.startsWith('+')) {
+    return `+${normalizedInput.replace(/\D/g, '')}`;
+  }
+
+  const digits = normalizedInput.replace(/\D/g, '');
+  const phoneNumber =
+    digits.length === 10 || digits.length === 11 ? `55${digits}` : digits;
+  return `+${phoneNumber}`;
+};
+
 export const processContactableInboxes = inboxes => {
   return inboxes.map(inbox => ({
     ...inbox.inbox,
@@ -216,11 +234,13 @@ export const createContactSearcher = () => {
 };
 
 export const createNewContact = async input => {
+  const isPhone = isPhoneInput(input);
+  const phoneNumber = isPhone ? normalizePhoneNumber(input) : '';
+  const phoneName = phoneNumber.replace(/^\+/, '');
+
   const payload = {
-    name: input.startsWith('+')
-      ? input.slice(1) // Remove the '+' prefix if it exists
-      : getCapitalizedNameFromEmail(input),
-    ...(input.startsWith('+') ? { phone_number: input } : { email: input }),
+    name: isPhone ? phoneName : getCapitalizedNameFromEmail(input),
+    ...(isPhone ? { phone_number: phoneNumber } : { email: input }),
   };
 
   const {

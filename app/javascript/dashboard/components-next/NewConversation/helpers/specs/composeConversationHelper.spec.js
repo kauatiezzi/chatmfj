@@ -92,6 +92,20 @@ describe('composeConversationHelper', () => {
     });
   });
 
+  describe('phone input helpers', () => {
+    it('detects phone-like values', () => {
+      expect(helpers.isPhoneInput('+5511999999999')).toBe(true);
+      expect(helpers.isPhoneInput('11999999999')).toBe(true);
+      expect(helpers.isPhoneInput('john@example.com')).toBe(false);
+    });
+
+    it('normalizes Brazilian mobile numbers without country code', () => {
+      expect(helpers.normalizePhoneNumber('11999999999')).toBe(
+        '+5511999999999'
+      );
+    });
+  });
+
   describe('processContactableInboxes', () => {
     it('processes inboxes with correct structure', () => {
       const inboxes = [
@@ -598,6 +612,28 @@ describe('composeConversationHelper', () => {
         expect(ContactAPI.create).toHaveBeenCalledWith({
           name: '919999999999',
           phone_number: '+919999999999',
+        });
+      });
+
+      it('creates new contact from a local phone number', async () => {
+        const mockContact = {
+          id: 1,
+          name: '5511999999999',
+          phone_number: '+5511999999999',
+        };
+        ContactAPI.create.mockResolvedValue({
+          data: { payload: { contact: mockContact } },
+        });
+
+        const result = await helpers.createNewContact('11999999999');
+        expect(result).toEqual({
+          id: 1,
+          name: '5511999999999',
+          phoneNumber: '+5511999999999',
+        });
+        expect(ContactAPI.create).toHaveBeenCalledWith({
+          name: '5511999999999',
+          phone_number: '+5511999999999',
         });
       });
     });
