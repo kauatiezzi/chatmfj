@@ -58,6 +58,7 @@ import {
   SALES_QUICK_FILTERS,
   applySalesFilter,
   getSalesMetrics,
+  isFollowUpDue,
 } from 'dashboard/helper/salesWorkspace';
 
 const props = defineProps({
@@ -320,6 +321,8 @@ function prioritizeUnreadConversations(conversations) {
     .sort((current, next) => {
       const currentUnreadCount = current.conversation.unread_count || 0;
       const nextUnreadCount = next.conversation.unread_count || 0;
+      const currentFollowUpDue = isFollowUpDue(current.conversation);
+      const nextFollowUpDue = isFollowUpDue(next.conversation);
 
       if (currentUnreadCount > 0 && nextUnreadCount === 0) {
         return -1;
@@ -329,6 +332,12 @@ function prioritizeUnreadConversations(conversations) {
       }
       if (currentUnreadCount !== nextUnreadCount) {
         return nextUnreadCount - currentUnreadCount;
+      }
+      if (currentFollowUpDue && !nextFollowUpDue) {
+        return -1;
+      }
+      if (!currentFollowUpDue && nextFollowUpDue) {
+        return 1;
       }
       return current.index - next.index;
     })
@@ -427,8 +436,8 @@ const salesMetrics = computed(() => getSalesMetrics(conversationList.value));
 const salesMetricItems = computed(() => [
   {
     id: 'attention',
-    label: 'Não lidas',
-    value: salesMetrics.value.unread,
+    label: 'Prioridade',
+    value: salesMetrics.value.attention,
     icon: 'i-lucide-bell-dot',
   },
   {

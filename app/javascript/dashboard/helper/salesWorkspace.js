@@ -1,9 +1,44 @@
+export const FOLLOW_UP_ATTRIBUTE = 'mfj_follow_up_at';
+
+export const SALES_LABELS = {
+  FOLLOW_UP: 'follow_up',
+  PROPOSAL_SENT: 'proposta_enviada',
+  SOLD: 'vendido',
+  LOST: 'declinado',
+  BOT_OFF: 'bot_off',
+  SCORM: 'scorm',
+};
+
+function getCustomAttributes(conversation = {}) {
+  return conversation.custom_attributes || conversation.customAttributes || {};
+}
+
+export function getFollowUpAt(conversation) {
+  return getCustomAttributes(conversation)[FOLLOW_UP_ATTRIBUTE];
+}
+
 export function hasUnreadMessages(conversation) {
   return Number(conversation.unread_count || conversation.unreadCount || 0) > 0;
 }
 
 export function hasLabel(conversation, label) {
   return (conversation.labels || []).includes(label);
+}
+
+export function hasFollowUp(conversation) {
+  return hasLabel(conversation, SALES_LABELS.FOLLOW_UP);
+}
+
+export function isFollowUpDue(conversation) {
+  const followUpAt = getFollowUpAt(conversation);
+  if (!followUpAt) return false;
+
+  const date = new Date(followUpAt);
+  if (Number.isNaN(date.getTime())) return false;
+
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+  return date <= todayEnd;
 }
 
 export function isConversationStale(conversation) {
@@ -24,27 +59,19 @@ export function isConversationStale(conversation) {
   return Date.now() - lastActivity > sixHours;
 }
 
-export const SALES_LABELS = {
-  FOLLOW_UP: 'follow_up',
-  PROPOSAL_SENT: 'proposta_enviada',
-  SOLD: 'vendido',
-  LOST: 'declinado',
-  BOT_OFF: 'bot_off',
-  SCORM: 'scorm',
-};
-
 export const SALES_QUICK_FILTERS = [
   {
     id: 'attention',
     label: 'Prioridade',
     icon: 'i-lucide-siren',
-    matches: conversation => hasUnreadMessages(conversation),
+    matches: conversation =>
+      hasUnreadMessages(conversation) || isFollowUpDue(conversation),
   },
   {
     id: 'follow_up',
     label: 'Follow-up',
     icon: 'i-lucide-clock-3',
-    matches: conversation => hasLabel(conversation, SALES_LABELS.FOLLOW_UP),
+    matches: conversation => hasFollowUp(conversation),
   },
   {
     id: 'proposal',
@@ -109,10 +136,12 @@ export const FOLLOW_UP_ACTIONS = [
 
 export function getSalesMetrics(conversations) {
   return {
-    unread: conversations.filter(hasUnreadMessages).length,
-    followUp: conversations.filter(conversation =>
-      hasLabel(conversation, SALES_LABELS.FOLLOW_UP)
+    attention: conversations.filter(
+      conversation =>
+        hasUnreadMessages(conversation) || isFollowUpDue(conversation)
     ).length,
+    unread: conversations.filter(hasUnreadMessages).length,
+    followUp: conversations.filter(hasFollowUp).length,
     proposal: conversations.filter(conversation =>
       hasLabel(conversation, SALES_LABELS.PROPOSAL_SENT)
     ).length,
@@ -134,4 +163,49 @@ export function applySalesFilter(conversations, filterId) {
 
 export function getSnoozeDate(hours) {
   return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+}
+
+export function getFollowUpBadge(conversation) {
+  const followUpAt = getFollowUpAt(conversation);
+  if (!followUpAt) return null;
+
+  const date = new Date(followUpAt);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const today = new Date();
+  const tomorrow = new Date();
+  tomorrow.setDate(today.getDate() + 1);
+
+  const sameDay = (left, right) =>
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate();
+
+  const time = date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  const day = date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+  });
+
+  if (sameDay(date, today)) {
+    return {
+      label: `Retorno hoje ${time}`,
+      isDue: true,
+    };
+  }
+
+  if (sameDay(date, tomorrow)) {
+    return {
+      label: `Retorno amanhã ${time}`,
+      isDue: false,
+    };
+  }
+
+  return {
+    label: `Retorno ${day} ${time}`,
+    isDue: date < today,
+  };
 }

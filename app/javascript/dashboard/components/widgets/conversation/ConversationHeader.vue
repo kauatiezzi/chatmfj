@@ -21,9 +21,11 @@ import { useI18n } from 'vue-i18n';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { useAlert } from 'dashboard/composables';
 import {
+  FOLLOW_UP_ATTRIBUTE,
   FOLLOW_UP_ACTIONS,
   SALES_LABELS,
   SALES_STAGE_ACTIONS,
+  getFollowUpBadge,
   getSnoozeDate,
 } from 'dashboard/helper/salesWorkspace';
 
@@ -174,6 +176,8 @@ const activeSalesStage = computed(() =>
   SALES_STAGE_ACTIONS.find(action => savedLabels.value.includes(action.id))
 );
 
+const followUpBadge = computed(() => getFollowUpBadge(currentChat.value));
+
 const updateConversationLabels = labels => {
   store.dispatch('conversationLabels/update', {
     conversationId: currentChat.value?.id,
@@ -204,12 +208,15 @@ const scheduleFollowUp = action => {
   const nextLabels = savedLabels.value.includes(SALES_LABELS.FOLLOW_UP)
     ? savedLabels.value
     : [...savedLabels.value, SALES_LABELS.FOLLOW_UP];
+  const followUpAt = getSnoozeDate(action.hours);
 
   updateConversationLabels(nextLabels);
   store.dispatch('toggleStatus', {
     conversationId: currentChat.value?.id,
-    status: wootConstants.STATUS_TYPE.SNOOZED,
-    snoozedUntil: getSnoozeDate(action.hours),
+    status: wootConstants.STATUS_TYPE.OPEN,
+    customAttributes: {
+      [FOLLOW_UP_ATTRIBUTE]: followUpAt,
+    },
   });
 };
 
@@ -402,6 +409,19 @@ const closeDropdownLabel = () => {
           >
             <span aria-hidden="true" class="i-lucide-copy size-3.5" />
           </button>
+
+          <span
+            v-if="followUpBadge"
+            class="inline-flex h-7 items-center gap-1 rounded-full px-2.5 font-semibold"
+            :class="
+              followUpBadge.isDue
+                ? 'bg-[#ff6a00] text-white'
+                : 'bg-[#fff7ef] text-[#9a4b00] dark:bg-[#2a1b13] dark:text-[#ffb272]'
+            "
+          >
+            <span aria-hidden="true" class="i-lucide-calendar-clock size-3.5" />
+            <span>{{ followUpBadge.label }}</span>
+          </span>
         </div>
       </div>
     </div>

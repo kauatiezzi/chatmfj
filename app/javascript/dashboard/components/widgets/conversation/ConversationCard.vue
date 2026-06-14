@@ -11,6 +11,7 @@ import UnreadBadge from 'dashboard/components-next/Conversation/ConversationCard
 import SLACardLabel from './components/SLACardLabel.vue';
 import VoiceCallStatus from './VoiceCallStatus.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
+import { getFollowUpBadge } from 'dashboard/helper/salesWorkspace';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -37,6 +38,7 @@ const hovered = ref(false);
 const unreadCount = computed(() => props.chat.unread_count);
 const hasUnread = computed(() => unreadCount.value > 0);
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
+const followUpBadge = computed(() => getFollowUpBadge(props.chat));
 
 const voiceCallData = computed(() => {
   const last = lastMessageInChat.value;
@@ -229,6 +231,18 @@ watch(
           <SLACardLabel :chat="chat" class="ltr:mr-1 rtl:ml-1" />
         </template>
       </CardLabels>
+      <div
+        v-if="followUpBadge"
+        class="mx-2 mt-1 inline-flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold"
+        :class="
+          followUpBadge.isDue
+            ? 'bg-[#ff6a00] text-white'
+            : 'bg-[#fff1e5] text-[#9a4b00] dark:bg-[#2a1b13] dark:text-[#ffb272]'
+        "
+      >
+        <span aria-hidden="true" class="i-lucide-calendar-clock size-3" />
+        <span class="truncate">{{ followUpBadge.label }}</span>
+      </div>
     </div>
   </div>
 </template>

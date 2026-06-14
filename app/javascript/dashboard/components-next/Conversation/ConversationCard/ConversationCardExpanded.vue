@@ -12,6 +12,7 @@ import SLACardLabel from 'dashboard/components-next/Conversation/Sla/SLACardLabe
 import CardStatusIcon from './CardStatusIcon.vue';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import { getFollowUpBadge } from 'dashboard/helper/salesWorkspace';
 
 const props = defineProps({
   chat: { type: Object, required: true },
@@ -34,6 +35,7 @@ const emit = defineEmits([
 
 const lastMessageInChat = computed(() => getLastMessage(props.chat));
 const showLabelsSection = computed(() => props.chat.labels?.length > 0);
+const followUpBadge = computed(() => getFollowUpBadge(props.chat));
 
 const voiceCallData = computed(() => {
   const last = lastMessageInChat.value;
@@ -177,6 +179,19 @@ const selectedModel = computed({
 
       <div v-if="hasSlaPolicyId" class="flex-shrink-0">
         <SLACardLabel ref="slaCardLabel" :chat="chat" />
+      </div>
+
+      <div
+        v-if="followUpBadge"
+        class="inline-flex max-w-36 flex-shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[0.6875rem] font-semibold"
+        :class="
+          followUpBadge.isDue
+            ? 'bg-[#ff6a00] text-white'
+            : 'bg-[#fff1e5] text-[#9a4b00] dark:bg-[#2a1b13] dark:text-[#ffb272]'
+        "
+      >
+        <Icon icon="i-lucide-calendar-clock" class="size-3 flex-shrink-0" />
+        <span class="truncate">{{ followUpBadge.label }}</span>
       </div>
 
       <div class="flex-shrink-0 w-[4.375rem] text-end">
