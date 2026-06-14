@@ -169,6 +169,9 @@ const conversationCustomViews = useMapGetter(
 );
 
 onMounted(() => {
+  if (!isMobile.value) {
+    snapToCollapsed();
+  }
   store.dispatch('labels/get');
   store.dispatch('inboxes/get');
   store.dispatch('notifications/unReadCount');
