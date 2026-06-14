@@ -68,11 +68,9 @@ const groupedConversationSections = computed(() => {
   const remainingLabelKeys = [...groupedConversations.keys()]
     .filter(key => key !== UNLABELED_SECTION && !orderedLabelKeys.includes(key))
     .sort((currentKey, nextKey) => currentKey.localeCompare(nextKey));
-  const sectionKeys = [...orderedLabelKeys, ...remainingLabelKeys];
-
-  if (groupedConversations.has(UNLABELED_SECTION)) {
-    sectionKeys.push(UNLABELED_SECTION);
-  }
+  const sectionKeys = groupedConversations.has(UNLABELED_SECTION)
+    ? [UNLABELED_SECTION, ...orderedLabelKeys, ...remainingLabelKeys]
+    : [...orderedLabelKeys, ...remainingLabelKeys];
 
   return sectionKeys.map(key => ({
     key,
@@ -135,7 +133,7 @@ defineExpose({ conversationListRef });
           <span
             class="min-w-0 flex-1 truncate text-sm font-semibold text-[#1f1f24] dark:text-[#fffaf4]"
           >
-            {{ section.title || $t('CHAT_LIST.LABEL_SECTIONS.NO_LABEL') }}
+            {{ section.title || $t('CHAT_LIST.LABEL_SECTIONS.PENDING') }}
           </span>
           <span
             aria-hidden="true"
