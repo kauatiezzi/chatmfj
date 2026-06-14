@@ -223,8 +223,11 @@ export function prependAgentName(message, user = {}) {
 
   if (!agentName || !content) return message;
 
-  const signature = `**${agentName}**`;
-  if (content.startsWith(signature)) return content;
+  const signature = `**${agentName}:**`;
+  const legacySignature = `**${agentName}**`;
+  if (content.startsWith(signature) || content.startsWith(legacySignature)) {
+    return content;
+  }
 
   return `${signature}\n\n${content}`;
 }
