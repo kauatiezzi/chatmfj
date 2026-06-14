@@ -216,3 +216,15 @@ export function getFollowUpBadge(conversation) {
     isDue: date < today,
   };
 }
+
+export function prependAgentName(message, user = {}) {
+  const content = String(message || '').trim();
+  const agentName = String(user.available_name || user.name || '').trim();
+
+  if (!agentName || !content) return message;
+
+  const signature = `**${agentName}**`;
+  if (content.startsWith(signature)) return content;
+
+  return `${signature}\n\n${content}`;
+}

@@ -1,9 +1,9 @@
 {
-  "name": "Chat MFJ",
+  "name": "Chat - MFJ Treinamentos",
   "short_name": "Chat MFJ",
   "icons": [
     {
-      "src": "/brand-assets/logomfj.png",
+      "src": "/brand-assets/mfj-icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }

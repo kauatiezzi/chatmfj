@@ -50,6 +50,7 @@ import {
   removeSignature,
   getEffectiveChannelType,
 } from 'dashboard/helper/editorHelper';
+import { prependAgentName } from 'dashboard/helper/salesWorkspace';
 import { useCopilotReply } from 'dashboard/composables/useCopilotReply';
 import { useKbd } from 'dashboard/composables/utils/useKbd';
 import { isFileTypeAllowedForChannel } from 'shared/helpers/FileHelper';
@@ -766,6 +767,7 @@ export default {
       }
       if (!this.showMentions) {
         const copilotAcceptedMessage = this.getCopilotAcceptedMessage();
+        const outgoingMessage = this.getOutgoingReplyMessage(this.message);
         const isOnWhatsApp =
           this.isATwilioWhatsAppChannel ||
           this.isAWhatsAppCloudChannel ||
@@ -778,11 +780,11 @@ export default {
         const isOnTiktok = this.isATiktokChannel;
         if ((isOnWhatsApp || isOnInstagram || isOnTiktok) && !this.isPrivate) {
           this.sendMessageAsMultipleMessages(
-            this.message,
+            outgoingMessage,
             copilotAcceptedMessage
           );
         } else {
-          const messagePayload = this.getMessagePayload(this.message);
+          const messagePayload = this.getMessagePayload(outgoingMessage);
           this.sendMessage(
             messagePayload,
             this.message,
@@ -797,6 +799,11 @@ export default {
         this.clearMessage();
         this.hideEmojiPicker();
       }
+    },
+    getOutgoingReplyMessage(message) {
+      return this.isPrivate
+        ? message
+        : prependAgentName(message, this.currentUser);
     },
     sendMessageAsMultipleMessages(message, copilotAcceptedMessage = '') {
       const messages = this.getMultipleMessagesPayload(message);

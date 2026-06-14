@@ -41,7 +41,11 @@ import filterQueryGenerator from '../helper/filterQueryGenerator.js';
 import languages from 'dashboard/components/widgets/conversation/advancedFilterItems/languages';
 import countries from 'shared/constants/countries';
 import { generateValuesForEditCustomViews } from 'dashboard/helper/customViewsHelper';
-import { conversationListPageURL } from '../helper/URLHelper';
+import {
+  conversationListPageURL,
+  conversationUrl,
+  frontendURL,
+} from '../helper/URLHelper';
 import {
   isOnMentionsView,
   isOnParticipatingView,
@@ -86,6 +90,12 @@ const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
 const searchQuery = ref('');
 const activeSalesFilter = ref('all');
 const showAdvancedFilters = ref(false);
+const ASSIGNED_NOTIFICATION_KEY = 'mfj_assigned_conversation_notifications';
+const assignedNotificationsEnabled = ref(
+  window.localStorage.getItem(ASSIGNED_NOTIFICATION_KEY) === 'true'
+);
+const assignedNotificationState = new Map();
+let assignedNotificationBaselineReady = false;
 // chatsOnView is to store the chats that are currently visible on the screen,
 // which mirrors the conversationList.
 const chatsOnView = ref([]);
@@ -344,6 +354,87 @@ function prioritizeUnreadConversations(conversations) {
     .map(({ conversation }) => conversation);
 }
 
+function canUseBrowserNotifications() {
+  return typeof window !== 'undefined' && 'Notification' in window;
+}
+
+function getConversationDisplayName(conversation) {
+  return conversation.meta?.sender?.name || conversation.display_id;
+}
+
+function openConversationFromNotification(conversation) {
+  window.focus();
+  router.push({
+    path: frontendURL(
+      conversationUrl({
+        accountId: currentAccountId.value,
+        activeInbox: props.conversationInbox,
+        teamId: props.teamId,
+        label: props.label,
+        id: conversation.id,
+      })
+    ),
+  });
+}
+
+function showAssignedConversationNotification(conversation) {
+  const notification = new Notification('Nova conversa para responder', {
+    body: getConversationDisplayName(conversation),
+    icon: '/brand-assets/mfj-icon.png',
+    tag: `mfj-assigned-${conversation.id}`,
+  });
+
+  notification.onclick = () => openConversationFromNotification(conversation);
+}
+
+function syncAssignedNotificationState(conversations) {
+  assignedNotificationState.clear();
+  conversations.forEach(conversation => {
+    assignedNotificationState.set(
+      conversation.id,
+      Number(conversation.unread_count || 0)
+    );
+  });
+}
+
+function watchAssignedConversationNotifications(conversations) {
+  if (!assignedNotificationsEnabled.value || !canUseBrowserNotifications()) {
+    return;
+  }
+
+  const assignedConversations = conversations.filter(
+    conversation => conversation.meta?.assignee?.id === currentUser.value?.id
+  );
+
+  if (Notification.permission !== 'granted') {
+    syncAssignedNotificationState(assignedConversations);
+    return;
+  }
+
+  if (!assignedNotificationBaselineReady) {
+    syncAssignedNotificationState(assignedConversations);
+    assignedNotificationBaselineReady = true;
+    return;
+  }
+
+  const nextState = new Map();
+  assignedConversations.forEach(conversation => {
+    const unreadCount = Number(conversation.unread_count || 0);
+    const previousUnreadCount = assignedNotificationState.get(conversation.id);
+
+    if (unreadCount > 0 && unreadCount > (previousUnreadCount || 0)) {
+      showAssignedConversationNotification(conversation);
+    }
+
+    nextState.set(conversation.id, unreadCount);
+  });
+
+  assignedNotificationState.clear();
+  nextState.forEach((unreadCount, conversationId) => {
+    assignedNotificationState.set(conversationId, unreadCount);
+  });
+}
+
 const conversationList = computed(() => {
   let localConversationList = [];
 
@@ -375,6 +466,40 @@ const conversationList = computed(() => {
 
   return localConversationList;
 });
+
+async function toggleAssignedNotifications() {
+  if (!assignedNotificationsEnabled.value) {
+    if (!canUseBrowserNotifications()) {
+      useAlert('Este navegador não suporta notificações.');
+      return;
+    }
+
+    const permission =
+      Notification.permission === 'default'
+        ? await Notification.requestPermission()
+        : Notification.permission;
+
+    if (permission !== 'granted') {
+      useAlert('Ative as notificações do navegador para receber os avisos.');
+      return;
+    }
+  }
+
+  assignedNotificationsEnabled.value = !assignedNotificationsEnabled.value;
+  window.localStorage.setItem(
+    ASSIGNED_NOTIFICATION_KEY,
+    String(assignedNotificationsEnabled.value)
+  );
+  assignedNotificationBaselineReady = false;
+  syncAssignedNotificationState(conversationList.value);
+  assignedNotificationBaselineReady = assignedNotificationsEnabled.value;
+
+  useAlert(
+    assignedNotificationsEnabled.value
+      ? 'Notificações de conversas atribuídas ativadas.'
+      : 'Notificações de conversas atribuídas desativadas.'
+  );
+}
 
 function normalizeSearchText(value) {
   return String(value || '')
@@ -999,6 +1124,10 @@ watch(activeSalesFilter, () => {
   resetBulkActions();
 });
 
+watch(conversationList, watchAssignedConversationNotifications, {
+  deep: true,
+});
+
 watch(conversationFilters, (newVal, oldVal) => {
   if (newVal !== oldVal) {
     store.dispatch('updateChatListFilters', newVal);
@@ -1085,6 +1214,21 @@ watch(conversationFilters, (newVal, oldVal) => {
           />
         </template>
       </ComposeConversation>
+      <NextButton
+        v-tooltip.top-end="
+          assignedNotificationsEnabled
+            ? 'Notificações ativadas'
+            : 'Ativar notificações'
+        "
+        :icon="
+          assignedNotificationsEnabled ? 'i-lucide-bell-ring' : 'i-lucide-bell'
+        "
+        slate
+        xs
+        faded
+        :color="assignedNotificationsEnabled ? 'ruby' : undefined"
+        @click="toggleAssignedNotifications"
+      />
     </div>
 
     <div

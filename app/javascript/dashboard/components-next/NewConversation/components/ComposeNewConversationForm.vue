@@ -14,6 +14,7 @@ import {
   prepareNewMessagePayload,
   prepareWhatsAppMessagePayload,
 } from 'dashboard/components-next/NewConversation/helpers/composeConversationHelper.js';
+import { prependAgentName } from 'dashboard/helper/salesWorkspace';
 
 import { useCopilotReply } from 'dashboard/composables/useCopilotReply';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
@@ -130,13 +131,7 @@ const validationStates = computed(() => ({
 
 const newMessagePayload = () => {
   const { message, subject, ccEmails, bccEmails, attachedFiles } = state;
-  const messageContent = props.messageSignature
-    ? appendSignature(
-        message,
-        props.messageSignature,
-        effectiveChannelType.value
-      )
-    : message;
+  const messageContent = prependAgentName(message, props.currentUser);
 
   return prepareNewMessagePayload({
     targetInbox: props.targetInbox,
