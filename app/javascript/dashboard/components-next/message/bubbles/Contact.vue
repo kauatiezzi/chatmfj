@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useAlert } from 'dashboard/composables';
 import { useStore } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
@@ -21,19 +21,34 @@ const { t } = useI18n();
 const composeConversationRef = ref(null);
 const savedContactId = ref(null);
 const isStartingConversation = ref(false);
+const vCardName = ref('');
+const vCardPhoneNumber = ref('');
 
 const attachment = computed(() => {
   return attachments.value[0];
 });
 
+const isVCardAttachment = computed(() => {
+  const extension = attachment.value?.extension || '';
+  const dataUrl = attachment.value?.dataUrl || '';
+  return (
+    extension.toLowerCase() === 'vcf' ||
+    decodeURIComponent(dataUrl).toLowerCase().endsWith('.vcf')
+  );
+});
+
 const phoneNumber = computed(() => {
-  return attachment.value?.fallbackTitle || '';
+  return attachment.value?.fallbackTitle || vCardPhoneNumber.value || '';
 });
 
 const contactName = computed(() => {
   const { meta } = attachment.value ?? {};
   const { firstName, lastName } = meta ?? {};
-  return `${firstName ?? ''} ${lastName ?? ''}`.trim() || phoneNumber.value;
+  return (
+    `${firstName ?? ''} ${lastName ?? ''}`.trim() ||
+    vCardName.value ||
+    phoneNumber.value
+  );
 });
 
 const contactInitial = computed(() => {
@@ -51,6 +66,36 @@ const rawPhoneNumber = computed(() => {
 const normalizedPhoneNumber = computed(() => {
   return rawPhoneNumber.value ? `+${rawPhoneNumber.value}` : '';
 });
+
+function unfoldVCard(value) {
+  return value.replace(/\r?\n[ \t]/g, '');
+}
+
+function getVCardValue(vCard, key) {
+  const line = vCard
+    .split(/\r?\n/)
+    .find(item => item.toUpperCase().startsWith(key));
+  return line?.split(':').slice(1).join(':').trim() || '';
+}
+
+function parseVCard(vCard) {
+  const unfoldedVCard = unfoldVCard(vCard);
+  vCardName.value =
+    getVCardValue(unfoldedVCard, 'FN') || getVCardValue(unfoldedVCard, 'N');
+  vCardPhoneNumber.value = getVCardValue(unfoldedVCard, 'TEL');
+}
+
+async function fetchVCardContact() {
+  if (!isVCardAttachment.value || !attachment.value?.dataUrl) return;
+
+  try {
+    const response = await fetch(attachment.value.dataUrl);
+    const vCard = await response.text();
+    parseVCard(vCard);
+  } catch (error) {
+    // Keep the downloadable contact card visible if the vCard cannot be read.
+  }
+}
 
 function getContactObject() {
   const contactItem = {
@@ -109,6 +154,13 @@ async function startConversation() {
     isStartingConversation.value = false;
   }
 }
+
+onMounted(fetchVCardContact);
+
+watch(
+  () => attachment.value?.dataUrl,
+  () => fetchVCardContact()
+);
 </script>
 
 <template>
@@ -131,12 +183,18 @@ async function startConversation() {
             {{ contactName }}
           </div>
           <div class="mt-0.5 truncate text-sm text-[#7a7f89]">
-            {{ phoneNumber }}
+            {{
+              phoneNumber ||
+              decodeURIComponent(attachment?.dataUrl || '')
+                .split('/')
+                .pop()
+            }}
           </div>
         </div>
       </div>
       <div class="border-t border-[#ffe1cc] p-3 dark:border-[#2b211c]">
         <ComposeConversation
+          v-if="formattedPhoneNumber"
           ref="composeConversationRef"
           :contact-id="savedContactId"
           align="start"
@@ -155,6 +213,14 @@ async function startConversation() {
             />
           </template>
         </ComposeConversation>
+        <a
+          v-else-if="isVCardAttachment"
+          :href="attachment.dataUrl"
+          class="flex h-8 w-full items-center justify-center rounded-md bg-[#fff4ea] text-sm font-medium text-[#ff6a00]"
+          download
+        >
+          {{ t('CONVERSATION.DOWNLOAD') }}
+        </a>
       </div>
     </div>
   </BaseBubble>

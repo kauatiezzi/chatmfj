@@ -20,6 +20,7 @@ import ChannelLeaf from './ChannelLeaf.vue';
 import ChannelIcon from 'next/icon/ChannelIcon.vue';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher.vue';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
+import mfjIconUrl from 'dashboard/assets/images/mfj-icon.png';
 
 const props = defineProps({
   isMobileSidebarOpen: {
@@ -34,8 +35,6 @@ const emit = defineEmits([
   'showCreateAccountModal',
   'closeMobileSidebar',
 ]);
-
-const mfjIconUrl = '/brand-assets/mfj-icon.png';
 
 const { accountScopedRoute, isOnChatwootCloud } = useAccount();
 const store = useStore();

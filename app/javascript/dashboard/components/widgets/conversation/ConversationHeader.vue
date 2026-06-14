@@ -158,7 +158,7 @@ const closeDropdownLabel = () => {
 <template>
   <div
     ref="conversationHeader"
-    class="flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-4 py-3 min-h-24 xl:min-h-16 bg-white dark:bg-[#17120f] border-b border-[#ececf0] dark:border-[#2b211c]"
+    class="relative z-20 flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-4 py-3 min-h-24 xl:min-h-16 bg-white dark:bg-[#17120f] border-b border-[#ececf0] dark:border-[#2b211c]"
   >
     <div
       class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1"
@@ -176,9 +176,7 @@ const closeDropdownLabel = () => {
         hide-offline-status
         rounded-full
       />
-      <div
-        class="flex flex-col items-start min-w-0 ml-2 overflow-hidden rtl:ml-0 rtl:mr-2"
-      >
+      <div class="flex flex-col items-start min-w-0 ml-2 rtl:ml-0 rtl:mr-2">
         <div
           class="flex flex-row flex-wrap items-center max-w-full gap-x-2 gap-y-1 p-0 m-0"
         >
@@ -186,12 +184,6 @@ const closeDropdownLabel = () => {
             class="min-w-0 max-w-full text-sm font-semibold truncate leading-tight text-[#1f1f24] dark:text-[#fffaf4]"
           >
             {{ currentContact.name }}
-          </span>
-          <span
-            v-if="contactPhoneNumber"
-            class="inline-flex shrink-0 items-center rounded-full bg-[#fff4ea] px-2 py-0.5 text-xs font-medium leading-4 text-[#9a4a00] dark:bg-[#2b1d17] dark:text-[#ffb066]"
-          >
-            {{ contactPhoneNumber }}
           </span>
           <fluent-icon
             v-if="!isHMACVerified"
@@ -212,6 +204,18 @@ const closeDropdownLabel = () => {
           >
             {{ `#${chat.id}` }}
           </button>
+          <span
+            v-if="contactPhoneNumber"
+            aria-hidden="true"
+            class="i-lucide-dot size-3 text-[#a3a7b0]"
+          />
+          <span
+            v-if="contactPhoneNumber"
+            class="inline-flex min-w-0 items-center gap-1 text-[#7a7f89]"
+          >
+            <span aria-hidden="true" class="i-lucide-phone size-3" />
+            <span class="truncate">{{ contactPhoneNumber }}</span>
+          </span>
           <span
             v-if="hasMultipleInboxes"
             aria-hidden="true"
@@ -250,7 +254,7 @@ const closeDropdownLabel = () => {
               'block visible': showSearchDropdownLabel,
               'hidden invisible': !showSearchDropdownLabel,
             }"
-            class="absolute top-7 z-[9999] w-64 rounded-lg border border-n-strong bg-n-alpha-3 p-2 shadow-lg backdrop-blur-[100px] dark:border-n-strong"
+            class="absolute top-full ltr:left-0 rtl:right-0 z-[10000] mt-2 w-72 rounded-lg border border-[#ffd0ad] bg-white p-2 shadow-xl dark:border-[#3a281f] dark:bg-[#211712]"
           >
             <LabelDropdown
               v-if="showSearchDropdownLabel"

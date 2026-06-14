@@ -5,6 +5,7 @@ import { useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import ButtonNext from 'next/button/Button.vue';
 import Icon from 'next/icon/Icon.vue';
+import mfjIconUrl from 'dashboard/assets/images/mfj-icon.png';
 
 import {
   DropdownContainer,
@@ -21,8 +22,6 @@ defineProps({
 });
 
 const emit = defineEmits(['showCreateAccountModal']);
-
-const mfjIconUrl = '/brand-assets/mfj-icon.png';
 
 const { t } = useI18n();
 const { accountId, currentAccount } = useAccount();

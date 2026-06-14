@@ -326,10 +326,17 @@ const componentToRender = computed(() => {
   }
 
   if (Array.isArray(props.attachments) && props.attachments.length === 1) {
-    const fileType = props.attachments[0].fileType;
+    const attachment = props.attachments[0];
+    const fileType = attachment.fileType;
+    const extension = attachment.extension || '';
+    const dataUrl = attachment.dataUrl || '';
+    const isVCard =
+      extension.toLowerCase() === 'vcf' ||
+      decodeURIComponent(dataUrl).toLowerCase().endsWith('.vcf');
 
     if (!props.content) {
       if (fileType === ATTACHMENT_TYPES.IMAGE) return ImageBubble;
+      if (fileType === ATTACHMENT_TYPES.FILE && isVCard) return ContactBubble;
       if (fileType === ATTACHMENT_TYPES.FILE) return FileBubble;
       if (fileType === ATTACHMENT_TYPES.AUDIO) return AudioBubble;
       if (fileType === ATTACHMENT_TYPES.VIDEO) return VideoBubble;
