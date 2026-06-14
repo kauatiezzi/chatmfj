@@ -83,7 +83,7 @@ const isHMACVerified = computed(() => {
 const currentContact = computed(() =>
   store.getters['contacts/getContact'](props.chat.meta.sender.id)
 );
-const contactPhoneNumber = computed(
+const rawContactPhoneNumber = computed(
   () =>
     currentContact.value?.phone_number ||
     currentContact.value?.phoneNumber ||
@@ -91,6 +91,28 @@ const contactPhoneNumber = computed(
     props.chat?.meta?.sender?.phoneNumber ||
     ''
 );
+const contactPhoneNumber = computed(() => {
+  const phoneNumber = String(rawContactPhoneNumber.value || '');
+  const digits = phoneNumber.replace(/\D/g, '');
+  const nationalDigits =
+    digits.startsWith('55') && digits.length > 11 ? digits.slice(2) : digits;
+
+  if (nationalDigits.length === 11) {
+    return `(${nationalDigits.slice(0, 2)}) ${nationalDigits.slice(
+      2,
+      7
+    )}-${nationalDigits.slice(7)}`;
+  }
+
+  if (nationalDigits.length === 10) {
+    return `(${nationalDigits.slice(0, 2)}) ${nationalDigits.slice(
+      2,
+      6
+    )}-${nationalDigits.slice(6)}`;
+  }
+
+  return phoneNumber;
+});
 
 const isSnoozed = computed(
   () => currentChat.value.status === wootConstants.STATUS_TYPE.SNOOZED
@@ -157,15 +179,17 @@ const closeDropdownLabel = () => {
       <div
         class="flex flex-col items-start min-w-0 ml-2 overflow-hidden rtl:ml-0 rtl:mr-2"
       >
-        <div class="flex flex-row items-center max-w-full gap-1 p-0 m-0">
+        <div
+          class="flex flex-row flex-wrap items-center max-w-full gap-x-2 gap-y-1 p-0 m-0"
+        >
           <span
-            class="text-sm font-semibold truncate leading-tight text-[#1f1f24] dark:text-[#fffaf4]"
+            class="min-w-0 max-w-full text-sm font-semibold truncate leading-tight text-[#1f1f24] dark:text-[#fffaf4]"
           >
             {{ currentContact.name }}
           </span>
           <span
             v-if="contactPhoneNumber"
-            class="shrink-0 text-xs font-medium text-[#7a7f89]"
+            class="inline-flex shrink-0 items-center rounded-full bg-[#fff4ea] px-2 py-0.5 text-xs font-medium leading-4 text-[#9a4a00] dark:bg-[#2b1d17] dark:text-[#ffb066]"
           >
             {{ contactPhoneNumber }}
           </span>
