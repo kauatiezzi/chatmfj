@@ -308,6 +308,27 @@ function filterByAssigneeTab(conversations) {
   return [...conversations];
 }
 
+function prioritizeUnreadConversations(conversations) {
+  return conversations
+    .map((conversation, index) => ({ conversation, index }))
+    .sort((current, next) => {
+      const currentUnreadCount = current.conversation.unread_count || 0;
+      const nextUnreadCount = next.conversation.unread_count || 0;
+
+      if (currentUnreadCount > 0 && nextUnreadCount === 0) {
+        return -1;
+      }
+      if (currentUnreadCount === 0 && nextUnreadCount > 0) {
+        return 1;
+      }
+      if (currentUnreadCount !== nextUnreadCount) {
+        return nextUnreadCount - currentUnreadCount;
+      }
+      return current.index - next.index;
+    })
+    .map(({ conversation }) => conversation);
+}
+
 const conversationList = computed(() => {
   let localConversationList = [];
 
@@ -378,14 +399,16 @@ function collectSearchFields(source) {
 const filteredConversationList = computed(() => {
   const query = normalizeSearchText(searchQuery.value);
   if (!query) {
-    return conversationList.value;
+    return prioritizeUnreadConversations(conversationList.value);
   }
 
-  return conversationList.value.filter(source => {
-    return collectSearchFields(source)
-      .map(normalizeSearchText)
-      .some(value => value.includes(query));
-  });
+  return prioritizeUnreadConversations(
+    conversationList.value.filter(source => {
+      return collectSearchFields(source)
+        .map(normalizeSearchText)
+        .some(value => value.includes(query));
+    })
+  );
 });
 
 const showEndOfListMessage = computed(() => {
