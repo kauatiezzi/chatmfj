@@ -54,6 +54,11 @@ import {
 import { matchesFilters } from '../store/modules/conversations/helpers/filterHelpers';
 import { CONVERSATION_EVENTS } from '../helper/AnalyticsHelper/events';
 import { ASSIGNEE_TYPE_TAB_PERMISSIONS } from 'dashboard/constants/permissions.js';
+import {
+  SALES_QUICK_FILTERS,
+  applySalesFilter,
+  getSalesMetrics,
+} from 'dashboard/helper/salesWorkspace';
 
 const props = defineProps({
   conversationInbox: { type: [String, Number], default: 0 },
@@ -78,6 +83,7 @@ const activeAssigneeTab = ref(wootConstants.ASSIGNEE_TYPE.ME);
 const activeStatus = ref(wootConstants.STATUS_TYPE.OPEN);
 const activeSortBy = ref(wootConstants.SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC);
 const searchQuery = ref('');
+const activeSalesFilter = ref('all');
 const showAdvancedFilters = ref(false);
 // chatsOnView is to store the chats that are currently visible on the screen,
 // which mirrors the conversationList.
@@ -398,18 +404,61 @@ function collectSearchFields(source) {
 
 const filteredConversationList = computed(() => {
   const query = normalizeSearchText(searchQuery.value);
+  const salesFilteredConversations = applySalesFilter(
+    conversationList.value,
+    activeSalesFilter.value
+  );
+
   if (!query) {
-    return prioritizeUnreadConversations(conversationList.value);
+    return prioritizeUnreadConversations(salesFilteredConversations);
   }
 
   return prioritizeUnreadConversations(
-    conversationList.value.filter(source => {
+    salesFilteredConversations.filter(source => {
       return collectSearchFields(source)
         .map(normalizeSearchText)
         .some(value => value.includes(query));
     })
   );
 });
+
+const salesMetrics = computed(() => getSalesMetrics(conversationList.value));
+
+const salesMetricItems = computed(() => [
+  {
+    id: 'attention',
+    label: 'Não lidas',
+    value: salesMetrics.value.unread,
+    icon: 'i-lucide-bell-dot',
+  },
+  {
+    id: 'follow_up',
+    label: 'Follow-up',
+    value: salesMetrics.value.followUp,
+    icon: 'i-lucide-clock-3',
+  },
+  {
+    id: 'proposal',
+    label: 'Propostas',
+    value: salesMetrics.value.proposal,
+    icon: 'i-lucide-file-check-2',
+  },
+  {
+    id: 'stale',
+    label: 'Paradas',
+    value: salesMetrics.value.stale,
+    icon: 'i-lucide-timer-off',
+  },
+]);
+
+const salesFilterItems = computed(() => [
+  {
+    id: 'all',
+    label: 'Tudo',
+    icon: 'i-lucide-list',
+  },
+  ...SALES_QUICK_FILTERS,
+]);
 
 const showEndOfListMessage = computed(() => {
   return !!(
@@ -664,6 +713,7 @@ function updateAssigneeTab(selectedTab) {
     resetBulkActions();
     emitter.emit('clearSearchInput');
     searchQuery.value = '';
+    activeSalesFilter.value = 'all';
     activeAssigneeTab.value = selectedTab;
     if (!currentPage.value) {
       fetchConversations();
@@ -936,6 +986,10 @@ watch(searchQuery, () => {
   resetBulkActions();
 });
 
+watch(activeSalesFilter, () => {
+  resetBulkActions();
+});
+
 watch(conversationFilters, (newVal, oldVal) => {
   if (newVal !== oldVal) {
     store.dispatch('updateChatListFilters', newVal);
@@ -1022,6 +1076,51 @@ watch(conversationFilters, (newVal, oldVal) => {
           />
         </template>
       </ComposeConversation>
+    </div>
+
+    <div
+      v-if="!hasAppliedFiltersOrActiveFolders"
+      class="grid grid-cols-4 gap-2 border-b border-[#ececf0] bg-[#fbfbfc] px-3 pb-3 dark:border-[#2b211c] dark:bg-[#17120f]"
+    >
+      <button
+        v-for="metric in salesMetricItems"
+        :key="metric.id"
+        type="button"
+        class="flex min-w-0 flex-col gap-1 rounded-lg border border-[#ececf0] bg-white px-2 py-2 text-left transition hover:border-[#ffd0ad] hover:bg-[#fff7ef] dark:border-[#2b211c] dark:bg-[#211712]"
+        :class="{
+          'border-[#ffd0ad] bg-[#fff7ef] dark:bg-[#2a1b13]':
+            activeSalesFilter === metric.id,
+        }"
+        @click="activeSalesFilter = metric.id"
+      >
+        <span class="flex items-center gap-1 text-[#ff6a00]">
+          <span :class="metric.icon" class="size-3.5" />
+          <span class="text-xs font-semibold">{{ metric.value }}</span>
+        </span>
+        <span class="truncate text-[0.6875rem] font-medium text-[#6f747c]">
+          {{ metric.label }}
+        </span>
+      </button>
+    </div>
+
+    <div
+      v-if="!hasAppliedFiltersOrActiveFolders"
+      class="flex gap-2 overflow-x-auto border-b border-[#ececf0] bg-[#fbfbfc] px-3 py-2 dark:border-[#2b211c] dark:bg-[#17120f]"
+    >
+      <button
+        v-for="filter in salesFilterItems"
+        :key="filter.id"
+        type="button"
+        class="flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-transparent px-3 text-xs font-semibold text-[#6f747c] transition hover:bg-[#fff7ef] hover:text-[#ff6a00]"
+        :class="{
+          'border-[#ffd0ad] bg-[#fff7ef] text-[#ff6a00]':
+            activeSalesFilter === filter.id,
+        }"
+        @click="activeSalesFilter = filter.id"
+      >
+        <span :class="filter.icon" class="size-3.5" />
+        <span>{{ filter.label }}</span>
+      </button>
     </div>
 
     <p

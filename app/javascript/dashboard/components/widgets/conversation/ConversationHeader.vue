@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import { useElementSize } from '@vueuse/core';
+import { useMapGetter } from 'dashboard/composables/store';
 import BackButton from '../BackButton.vue';
 import InboxName from '../InboxName.vue';
 import MoreActions from './MoreActions.vue';
@@ -19,6 +20,12 @@ import { useConversationLabels } from 'dashboard/composables/useConversationLabe
 import { useI18n } from 'vue-i18n';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { useAlert } from 'dashboard/composables';
+import {
+  FOLLOW_UP_ACTIONS,
+  SALES_LABELS,
+  SALES_STAGE_ACTIONS,
+  getSnoozeDate,
+} from 'dashboard/helper/salesWorkspace';
 
 const props = defineProps({
   chat: {
@@ -48,6 +55,7 @@ const {
 } = useConversationLabels();
 
 const currentChat = computed(() => store.getters.getSelectedChat);
+const currentUser = useMapGetter('getCurrentUser');
 const accountId = computed(() => store.getters.getCurrentAccountId);
 
 const chatMetadata = computed(() => props.chat.meta);
@@ -136,6 +144,81 @@ const hasMultipleInboxes = computed(
 );
 
 const hasSlaPolicyId = computed(() => props.chat?.sla_policy_id);
+
+const assignedAgent = computed({
+  get() {
+    return currentChat.value?.meta?.assignee;
+  },
+  set(agent) {
+    const agentId = agent ? agent.id : null;
+    store.dispatch('setCurrentChatAssignee', {
+      conversationId: currentChat.value?.id,
+      assignee: agent,
+    });
+    store.dispatch('assignAgent', {
+      conversationId: currentChat.value?.id,
+      agentId,
+    });
+  },
+});
+
+const isAssignedToCurrentUser = computed(
+  () => assignedAgent.value?.id === currentUser.value?.id
+);
+
+const showSelfAssignAction = computed(
+  () => !!currentUser.value?.id && !isAssignedToCurrentUser.value
+);
+
+const activeSalesStage = computed(() =>
+  SALES_STAGE_ACTIONS.find(action => savedLabels.value.includes(action.id))
+);
+
+const updateConversationLabels = labels => {
+  store.dispatch('conversationLabels/update', {
+    conversationId: currentChat.value?.id,
+    labels,
+  });
+};
+
+const setSalesLabel = labelTitle => {
+  const salesStageLabels = SALES_STAGE_ACTIONS.map(action => action.id);
+  const nextLabels = savedLabels.value.filter(
+    label => !salesStageLabels.includes(label)
+  );
+
+  if (!nextLabels.includes(labelTitle)) {
+    nextLabels.push(labelTitle);
+  }
+
+  updateConversationLabels(nextLabels);
+};
+
+const selfAssignConversation = async () => {
+  const { avatar_url: avatarUrl, ...rest } = currentUser.value || {};
+  assignedAgent.value = { ...rest, thumbnail: avatarUrl };
+  useAlert(t('CONVERSATION.CHANGE_AGENT'));
+};
+
+const scheduleFollowUp = action => {
+  const nextLabels = savedLabels.value.includes(SALES_LABELS.FOLLOW_UP)
+    ? savedLabels.value
+    : [...savedLabels.value, SALES_LABELS.FOLLOW_UP];
+
+  updateConversationLabels(nextLabels);
+  store.dispatch('toggleStatus', {
+    conversationId: currentChat.value?.id,
+    status: wootConstants.STATUS_TYPE.SNOOZED,
+    snoozedUntil: getSnoozeDate(action.hours),
+  });
+};
+
+const copyPhoneNumber = async () => {
+  if (!rawContactPhoneNumber.value) return;
+
+  await copyTextToClipboard(rawContactPhoneNumber.value);
+  useAlert(t('CONTACT_PANEL.COPY_SUCCESSFUL'));
+};
 
 const copyConversationId = async () => {
   try {
@@ -265,6 +348,60 @@ const closeDropdownLabel = () => {
               @remove="removeLabelFromConversation"
             />
           </div>
+        </div>
+
+        <div
+          class="mt-2 flex max-w-full flex-wrap items-center gap-1.5 text-xs"
+        >
+          <button
+            v-if="showSelfAssignAction"
+            type="button"
+            class="inline-flex h-7 items-center gap-1 rounded-full border border-[#ffd0ad] bg-[#fff7ef] px-2.5 font-semibold text-[#ff6a00] transition hover:bg-[#ffe7d4] dark:border-[#4a2b17] dark:bg-[#2a1b13]"
+            @click="selfAssignConversation"
+          >
+            <span aria-hidden="true" class="i-lucide-user-check size-3.5" />
+            <span>{{ t('CONVERSATION.ASSIGN_TO_ME') }}</span>
+          </button>
+
+          <button
+            v-for="action in SALES_STAGE_ACTIONS"
+            :key="action.id"
+            type="button"
+            class="inline-flex h-7 items-center gap-1 rounded-full border border-[#ececf0] bg-white px-2.5 font-medium text-[#6f747c] transition hover:border-[#ffd0ad] hover:bg-[#fff7ef] hover:text-[#ff6a00] dark:border-[#30251f] dark:bg-[#211712]"
+            :class="{
+              'border-[#ffb272] bg-[#fff1e5] text-[#ff6a00] dark:bg-[#321f12]':
+                activeSalesStage?.id === action.id,
+            }"
+            @click="setSalesLabel(action.id)"
+          >
+            <span aria-hidden="true" :class="action.icon" class="size-3.5" />
+            <span>{{ action.label }}</span>
+          </button>
+
+          <span
+            class="hidden h-4 w-px bg-[#ececf0] dark:bg-[#3a281f] md:inline-flex"
+          />
+
+          <button
+            v-for="action in FOLLOW_UP_ACTIONS"
+            :key="action.id"
+            type="button"
+            class="inline-flex h-7 items-center gap-1 rounded-full bg-[#fff7ef] px-2.5 font-medium text-[#9a4b00] transition hover:bg-[#ffe7d4] dark:bg-[#2a1b13] dark:text-[#ffb272]"
+            @click="scheduleFollowUp(action)"
+          >
+            <span aria-hidden="true" class="i-lucide-alarm-clock size-3.5" />
+            <span>{{ action.label }}</span>
+          </button>
+
+          <button
+            v-if="rawContactPhoneNumber"
+            v-tooltip.top="'Copiar telefone'"
+            type="button"
+            class="inline-flex size-7 items-center justify-center rounded-full border border-[#ececf0] bg-white text-[#6f747c] transition hover:border-[#ffd0ad] hover:bg-[#fff7ef] hover:text-[#ff6a00] dark:border-[#30251f] dark:bg-[#211712]"
+            @click="copyPhoneNumber"
+          >
+            <span aria-hidden="true" class="i-lucide-copy size-3.5" />
+          </button>
         </div>
       </div>
     </div>
