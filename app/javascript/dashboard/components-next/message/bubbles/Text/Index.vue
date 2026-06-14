@@ -4,6 +4,7 @@ import BaseBubble from 'next/message/bubbles/Base.vue';
 import FormattedContent from './FormattedContent.vue';
 import AttachmentChips from 'next/message/chips/AttachmentChips.vue';
 import TranslationToggle from 'dashboard/components-next/message/TranslationToggle.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { MESSAGE_TYPES } from '../../constants';
 import { useMessageContext } from '../../provider.js';
 import { useTranslations } from 'dashboard/composables/useTranslations';
@@ -32,6 +33,26 @@ const isTemplate = computed(() => {
   return messageType.value === MESSAGE_TYPES.TEMPLATE;
 });
 
+const groupSender = computed(() => {
+  const match = renderContent.value?.match(
+    /^(\+?\d[\d\s().-]{7,})\s*-\s*([^:\n]{1,80}):\s*\n*([\s\S]*)$/
+  );
+
+  if (!match) return null;
+
+  const [, phone, name, message] = match;
+  return {
+    phone: phone.trim(),
+    name: name.trim(),
+    initials: name.trim().charAt(0).toUpperCase(),
+    message: message.trim(),
+  };
+});
+
+const visibleContent = computed(() => {
+  return groupSender.value?.message || renderContent.value;
+});
+
 const isEmpty = computed(() => {
   return !content.value && !attachments.value?.length;
 });
@@ -47,7 +68,26 @@ const handleSeeOriginal = () => {
       <span v-if="isEmpty" class="text-n-slate-11">
         {{ $t('CONVERSATION.NO_CONTENT') }}
       </span>
-      <FormattedContent v-if="renderContent" :content="renderContent" />
+      <div
+        v-if="groupSender"
+        class="-mx-1 -mt-1 flex items-center gap-2 rounded-md bg-[#fff7ef] px-2 py-1.5 text-xs text-[#7a4a24]"
+      >
+        <div
+          class="flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-[#ff6a00] text-[0.625rem] font-semibold text-white"
+        >
+          {{ groupSender.initials }}
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex min-w-0 items-center gap-1 font-semibold">
+            <Icon icon="i-lucide-users" class="size-3 flex-shrink-0" />
+            <span class="truncate">{{ groupSender.name }}</span>
+          </div>
+          <div class="truncate text-[0.6875rem] text-[#9a6a43]">
+            {{ groupSender.phone }}
+          </div>
+        </div>
+      </div>
+      <FormattedContent v-if="visibleContent" :content="visibleContent" />
       <TranslationToggle
         v-if="hasTranslations"
         class="-mt-3"

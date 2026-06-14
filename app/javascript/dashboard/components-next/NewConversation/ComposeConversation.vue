@@ -14,6 +14,7 @@ import {
   fetchContactableInboxes,
   processContactableInboxes,
   mergeInboxDetails,
+  buildPhoneContactableInboxes,
 } from 'dashboard/components-next/NewConversation/helpers/composeConversationHelper';
 
 import Popover from 'dashboard/components-next/popover/Popover.vue';
@@ -45,6 +46,7 @@ const targetInbox = ref(null);
 const isCreatingContact = ref(false);
 const isFetchingInboxes = ref(false);
 const isSearching = ref(false);
+const contactInboxRequestId = ref(0);
 
 const formState = reactive({
   message: '',
@@ -104,6 +106,10 @@ const resetContacts = () => {
   contacts.value = [];
 };
 
+const getContactPhoneNumber = contact => {
+  return contact?.phoneNumber || contact?.phone_number || '';
+};
+
 const handleSelectedContact = async ({ value, action, ...rest }) => {
   let contact;
   if (action === 'create') {
@@ -125,13 +131,23 @@ const handleSelectedContact = async ({ value, action, ...rest }) => {
     try {
       const contactableInboxes = await fetchContactableInboxes(contact.id);
       // Merge the processed contactableInboxes with the inboxesList
-      selectedContact.value.contactInboxes = mergeInboxDetails(
+      const mergedContactableInboxes = mergeInboxDetails(
         contactableInboxes,
         inboxesList.value
       );
+      selectedContact.value.contactInboxes = mergedContactableInboxes.length
+        ? mergedContactableInboxes
+        : buildPhoneContactableInboxes(
+            getContactPhoneNumber(contact),
+            inboxesList.value
+          );
 
       isFetchingInboxes.value = false;
     } catch (error) {
+      selectedContact.value.contactInboxes = buildPhoneContactableInboxes(
+        getContactPhoneNumber(contact),
+        inboxesList.value
+      );
       isFetchingInboxes.value = false;
     }
   }
@@ -204,9 +220,29 @@ const onPopoverHide = () => {
 const show = () => popoverRef.value?.show();
 const hide = () => popoverRef.value?.hide();
 
+const getContactInboxes = async contact => {
+  const currentContactInboxes = processContactableInboxes(
+    contact.contactInboxes || []
+  );
+
+  if (currentContactInboxes.length) {
+    return mergeInboxDetails(currentContactInboxes, inboxesList.value);
+  }
+
+  const contactableInboxes = await fetchContactableInboxes(contact.id);
+  if (contactableInboxes.length) {
+    return mergeInboxDetails(contactableInboxes, inboxesList.value);
+  }
+
+  return buildPhoneContactableInboxes(
+    getContactPhoneNumber(contact),
+    inboxesList.value
+  );
+};
+
 watch(
   activeContact,
-  (currentContact, previousContact) => {
+  async (currentContact, previousContact) => {
     if (currentContact && props.contactId) {
       // Reset on contact change
       if (currentContact?.id !== previousContact?.id) {
@@ -215,15 +251,29 @@ watch(
         formState.message = '';
       }
 
-      // First process the contactable inboxes to get the right structure
-      const processedInboxes = processContactableInboxes(
-        currentContact.contactInboxes || []
-      );
-      // Then Merge processedInboxes with the inboxes list
-      selectedContact.value = {
-        ...currentContact,
-        contactInboxes: mergeInboxDetails(processedInboxes, inboxesList.value),
-      };
+      const requestId = contactInboxRequestId.value + 1;
+      contactInboxRequestId.value = requestId;
+      isFetchingInboxes.value = true;
+      selectedContact.value = { ...currentContact, contactInboxes: [] };
+
+      try {
+        const contactInboxes = await getContactInboxes(currentContact);
+        if (contactInboxRequestId.value !== requestId) return;
+        selectedContact.value = { ...currentContact, contactInboxes };
+      } catch (error) {
+        if (contactInboxRequestId.value !== requestId) return;
+        selectedContact.value = {
+          ...currentContact,
+          contactInboxes: buildPhoneContactableInboxes(
+            getContactPhoneNumber(currentContact),
+            inboxesList.value
+          ),
+        };
+      } finally {
+        if (contactInboxRequestId.value === requestId) {
+          isFetchingInboxes.value = false;
+        }
+      }
     }
   },
   { immediate: true, deep: true }

@@ -1,4 +1,4 @@
-import { INBOX_TYPES } from 'dashboard/helper/inbox';
+import { INBOX_TYPES, TWILIO_CHANNEL_MEDIUM } from 'dashboard/helper/inbox';
 import { getInboxIconByType } from 'dashboard/helper/inbox';
 import camelcaseKeys from 'camelcase-keys';
 import ContactAPI from 'dashboard/api/contacts';
@@ -120,6 +120,49 @@ export const mergeInboxDetails = (inboxesData, inboxesList = []) => {
       ...inboxData,
     };
   });
+};
+
+const normalizePhoneDigits = phoneNumber => {
+  return String(phoneNumber || '').replace(/\D/g, '');
+};
+
+export const getPhoneSourceIdForInbox = (phoneNumber, inbox = {}) => {
+  const digits = normalizePhoneDigits(phoneNumber);
+  if (!digits) return '';
+
+  if (inbox.channelType === INBOX_TYPES.WHATSAPP) {
+    return digits;
+  }
+
+  if (
+    inbox.channelType === INBOX_TYPES.TWILIO &&
+    inbox.medium === TWILIO_CHANNEL_MEDIUM.WHATSAPP
+  ) {
+    return `whatsapp:+${digits}`;
+  }
+
+  if (inbox.channelType === INBOX_TYPES.TWILIO) {
+    return `+${digits}`;
+  }
+
+  return '';
+};
+
+export const buildPhoneContactableInboxes = (phoneNumber, inboxesList = []) => {
+  return inboxesList
+    .map(inbox => camelcaseKeys(inbox, { deep: true }))
+    .map(inbox => ({
+      ...inbox,
+      sourceId: getPhoneSourceIdForInbox(phoneNumber, inbox),
+    }))
+    .filter(inbox => {
+      const isWhatsApp =
+        inbox.channelType === INBOX_TYPES.WHATSAPP ||
+        (inbox.channelType === INBOX_TYPES.TWILIO &&
+          inbox.medium === TWILIO_CHANNEL_MEDIUM.WHATSAPP);
+
+      return isWhatsApp && inbox.sourceId;
+    });
 };
 
 export const prepareAttachmentPayload = (
