@@ -102,11 +102,11 @@ watch(
 
 <template>
   <div
-    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border-b border-[#e7d6c5] hover:bg-[#efe4d8] dark:hover:bg-[#241812] group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-[#f8f2eb] before:pointer-events-none hover:before:content-['']"
+    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border-b border-[#eeeef2] hover:bg-[#fff4fa] dark:hover:bg-[#241812] group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-[#fbfbfc] before:pointer-events-none hover:before:content-['']"
     :class="{
-      'active animate-card-select bg-[#e7f7ef] dark:bg-[#1c2a24] !border-[#00a884]/30':
+      'active animate-card-select bg-[#fff0f7] dark:bg-[#2b1721] !border-[#e91e7d]/30':
         isActiveChat,
-      'selected bg-[#eef8f2] dark:bg-[#211712] !border-[#00a884]/30': selected,
+      'selected bg-[#fff6fa] dark:bg-[#211712] !border-[#e91e7d]/30': selected,
       'px-0': compact,
       'px-3': !compact,
     }"
@@ -169,7 +169,7 @@ watch(
         </div>
       </div>
       <h4
-        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-[#111b21] dark:text-[#fffaf4]"
+        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-[#1f1f24] dark:text-[#fffaf4]"
         :class="hasUnread ? 'font-semibold' : 'font-medium'"
       >
         {{ currentContact.name }}
@@ -185,7 +185,7 @@ watch(
         v-else-if="lastMessageInChat"
         key="message-preview"
         :message="lastMessageInChat"
-        class="my-0 mx-2 leading-6 h-6 flex-1 min-w-0 text-sm text-[#667781]"
+        class="my-0 mx-2 leading-6 h-6 flex-1 min-w-0 text-sm text-[#7a7f89]"
         :class="messagePreviewClass"
       />
       <p

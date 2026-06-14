@@ -57,14 +57,14 @@ const toggleConversationLayout = () => {
 
 <template>
   <div
-    class="flex items-center justify-between gap-2 px-4 h-[4rem] bg-[#fffaf4] dark:bg-[#17120f]"
+    class="flex items-center justify-between gap-2 px-4 h-[4rem] bg-[#fbfbfc] dark:bg-[#17120f]"
     :class="{
       'border-b border-n-strong': hasAppliedFiltersOrActiveFolders,
     }"
   >
     <div class="flex items-center justify-center min-w-0">
       <h1
-        class="text-lg font-semibold truncate text-[#17120f] dark:text-[#fffaf4]"
+        class="text-lg font-semibold truncate text-[#1f1f24] dark:text-[#fffaf4]"
         :title="pageTitle"
       >
         {{ pageTitle }}
@@ -73,14 +73,14 @@ const toggleConversationLayout = () => {
         v-if="
           allCount > 0 && hasAppliedFiltersOrActiveFolders && !isListLoading
         "
-        class="px-2 py-1 my-0.5 mx-1 rounded-full capitalize bg-[#ff5b00]/10 text-xxs text-[#ff5b00] font-semibold shrink-0"
+        class="px-2 py-1 my-0.5 mx-1 rounded-full capitalize bg-[#e91e7d]/10 text-xxs text-[#e91e7d] font-semibold shrink-0"
         :title="allCount"
       >
         {{ formattedAllCount }}
       </span>
       <span
         v-if="!hasAppliedFiltersOrActiveFolders"
-        class="px-2 py-1 my-0.5 mx-1 rounded-full capitalize bg-[#ff5b00]/10 text-xxs text-[#ff5b00] font-semibold shrink-0"
+        class="px-2 py-1 my-0.5 mx-1 rounded-full capitalize bg-[#e91e7d]/10 text-xxs text-[#e91e7d] font-semibold shrink-0"
       >
         {{ $t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${activeStatus}.TEXT`) }}
       </span>

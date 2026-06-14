@@ -511,7 +511,7 @@ export default {
       </template>
     </MessageList>
     <div
-      class="flex relative flex-col bg-[#efe7dd] dark:bg-[#120f0d] px-2 pb-2 sm:px-4 sm:pb-4"
+      class="flex relative flex-col bg-[#f7f7f8] dark:bg-[#120f0d] px-2 pb-2 sm:px-4 sm:pb-4"
     >
       <div
         v-if="isAnyoneTyping"

@@ -196,7 +196,7 @@ export default {
 
 <template>
   <section
-    class="flex w-full h-full min-w-0 gap-0 p-0 bg-[#d9c4ad] dark:bg-[#0d0b0a] lg:gap-3 lg:p-3"
+    class="flex w-full h-full min-w-0 gap-0 p-0 bg-[#f2f3f5] dark:bg-[#0d0b0a] lg:gap-3 lg:p-3"
   >
     <ChatList
       :show-conversation-list="showConversationList"

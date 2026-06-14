@@ -91,7 +91,7 @@ export default {
 
 <template>
   <div
-    class="conversation-details-wrap flex flex-col min-w-0 w-full bg-[#efe7dd] dark:bg-[#120f0d] relative overflow-hidden lg:rounded-2xl lg:border border-[#d8c3af] dark:border-[#2b211c] lg:shadow-sm"
+    class="conversation-details-wrap flex flex-col min-w-0 w-full bg-[#f7f7f8] dark:bg-[#120f0d] relative overflow-hidden lg:rounded-2xl lg:border border-[#e8e8ec] dark:border-[#2b211c] lg:shadow-sm"
     :class="{
       'border-l rtl:border-l-0 rtl:border-r border-n-weak': !isOnExpandedLayout,
     }"

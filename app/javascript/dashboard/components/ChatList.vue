@@ -922,7 +922,7 @@ watch(conversationFilters, (newVal, oldVal) => {
 
 <template>
   <div
-    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-[#f8f2eb] dark:bg-[#17120f] relative overflow-hidden border-r border-[#d8c3af] dark:border-[#2b211c] lg:rounded-2xl lg:border lg:shadow-sm"
+    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-[#fbfbfc] dark:bg-[#17120f] relative overflow-hidden border-r border-[#e8e8ec] dark:border-[#2b211c] lg:rounded-2xl lg:border lg:shadow-sm"
     :class="[
       { hidden: !showConversationList },
       isOnExpandedLayout ? 'basis-full' : 'w-[360px] 2xl:w-[420px]',
@@ -974,7 +974,7 @@ watch(conversationFilters, (newVal, oldVal) => {
     />
 
     <div
-      class="flex items-center gap-2 px-3 py-3 bg-[#f8f2eb] dark:bg-[#17120f] border-b border-[#ead8c7] dark:border-[#2b211c]"
+      class="flex items-center gap-2 px-3 py-3 bg-[#fbfbfc] dark:bg-[#17120f] border-b border-[#ececf0] dark:border-[#2b211c]"
     >
       <div class="relative flex-1 min-w-0">
         <span
@@ -983,7 +983,7 @@ watch(conversationFilters, (newVal, oldVal) => {
         <input
           v-model="searchQuery"
           type="search"
-          class="w-full h-10 px-3 ltr:pl-9 rtl:pr-9 text-sm rounded-lg outline outline-1 outline-[#dfcbb8] bg-[#fffaf4] dark:bg-[#211712] text-[#17120f] dark:text-[#fffaf4] placeholder:text-[#9b8b7b] focus:outline-[#00a884]"
+          class="w-full h-10 px-3 ltr:pl-9 rtl:pr-9 text-sm rounded-full outline outline-1 outline-[#ececf0] bg-white dark:bg-[#211712] text-[#1f1f24] dark:text-[#fffaf4] placeholder:text-[#9aa0aa] focus:outline-[#e91e7d]"
           :placeholder="$t('CHAT_LIST.SEARCH.INPUT')"
         />
       </div>

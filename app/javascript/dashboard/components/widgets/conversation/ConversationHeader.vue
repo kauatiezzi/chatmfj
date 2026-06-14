@@ -107,7 +107,7 @@ const copyConversationId = async () => {
 <template>
   <div
     ref="conversationHeader"
-    class="flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-4 pt-3 pb-2 h-24 xl:h-16 bg-[#f8f2eb] dark:bg-[#17120f] border-b border-[#d8c3af] dark:border-[#2b211c]"
+    class="flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-4 pt-3 pb-2 h-24 xl:h-16 bg-white dark:bg-[#17120f] border-b border-[#ececf0] dark:border-[#2b211c]"
   >
     <div
       class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1"
@@ -130,7 +130,7 @@ const copyConversationId = async () => {
       >
         <div class="flex flex-row items-center max-w-full gap-1 p-0 m-0">
           <span
-            class="text-sm font-semibold truncate leading-tight text-[#111b21] dark:text-[#fffaf4]"
+            class="text-sm font-semibold truncate leading-tight text-[#1f1f24] dark:text-[#fffaf4]"
           >
             {{ currentContact.name }}
           </span>
@@ -148,7 +148,7 @@ const copyConversationId = async () => {
         >
           <button
             type="button"
-            class="truncate text-label-small text-[#667781] hover:text-[#00a884] !p-0 cursor-pointer"
+            class="truncate text-label-small text-[#7a7f89] hover:text-[#e91e7d] !p-0 cursor-pointer"
             @click="copyConversationId"
           >
             {{ `#${chat.id}` }}
@@ -156,13 +156,13 @@ const copyConversationId = async () => {
           <span
             v-if="hasMultipleInboxes"
             aria-hidden="true"
-            class="i-lucide-dot size-3 text-[#8696a0]"
+            class="i-lucide-dot size-3 text-[#a3a7b0]"
           />
           <InboxName v-if="hasMultipleInboxes" :inbox="inbox" class="!mx-0" />
           <span
             v-if="isSnoozed"
             aria-hidden="true"
-            class="i-lucide-dot size-3 text-[#8696a0]"
+            class="i-lucide-dot size-3 text-[#a3a7b0]"
           />
           <span v-if="isSnoozed" class="font-medium text-n-amber-10">
             {{ snoozedDisplayText }}

@@ -20,14 +20,14 @@ const { variant, orientation, inReplyTo, shouldGroupWithNext } =
 const { t } = useI18n();
 
 const variantBaseMap = {
-  [MESSAGE_VARIANTS.AGENT]: 'bg-[#d9fdd3] text-[#111b21] shadow-sm',
+  [MESSAGE_VARIANTS.AGENT]: 'bg-[#ffe1ee] text-[#1f1f24] shadow-sm',
   [MESSAGE_VARIANTS.PRIVATE]:
     'bg-[#fff4cf] dark:bg-[#3a260f] text-[#4b3320] dark:text-[#ffe8b8] [&_.prosemirror-mention-node]:font-semibold',
   [MESSAGE_VARIANTS.USER]:
-    'bg-white dark:bg-[#211712] text-[#111b21] dark:text-[#fffaf4] shadow-sm',
+    'bg-white dark:bg-[#211712] text-[#1f1f24] dark:text-[#fffaf4] shadow-sm',
   [MESSAGE_VARIANTS.ACTIVITY]: 'bg-n-alpha-1 text-n-slate-11 text-sm',
-  [MESSAGE_VARIANTS.BOT]: 'bg-[#d9fdd3] text-[#111b21] shadow-sm',
-  [MESSAGE_VARIANTS.TEMPLATE]: 'bg-[#d9fdd3] text-[#111b21] shadow-sm',
+  [MESSAGE_VARIANTS.BOT]: 'bg-[#ffe1ee] text-[#1f1f24] shadow-sm',
+  [MESSAGE_VARIANTS.TEMPLATE]: 'bg-[#ffe1ee] text-[#1f1f24] shadow-sm',
   [MESSAGE_VARIANTS.ERROR]: 'bg-n-ruby-4 text-n-ruby-12',
   [MESSAGE_VARIANTS.EMAIL]: 'w-full',
   [MESSAGE_VARIANTS.UNSUPPORTED]:

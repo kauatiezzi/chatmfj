@@ -1449,7 +1449,7 @@ export default {
 }
 
 .reply-box {
-  @apply relative mb-0 mx-0 border border-[#d8c3af] rounded-2xl bg-[#fffaf4] shadow-sm dark:bg-[#17120f] dark:border-[#2b211c];
+  @apply relative mb-0 mx-0 border border-[#f0d5e2] rounded-2xl bg-white shadow-sm dark:bg-[#17120f] dark:border-[#2b211c];
 
   &.is-private {
     @apply bg-n-solid-amber dark:border-n-amber-3/10 border-n-amber-12/5;
