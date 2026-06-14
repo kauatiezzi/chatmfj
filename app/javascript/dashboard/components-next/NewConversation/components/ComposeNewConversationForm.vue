@@ -130,10 +130,18 @@ const validationStates = computed(() => ({
 
 const newMessagePayload = () => {
   const { message, subject, ccEmails, bccEmails, attachedFiles } = state;
+  const messageContent = props.messageSignature
+    ? appendSignature(
+        message,
+        props.messageSignature,
+        effectiveChannelType.value
+      )
+    : message;
+
   return prepareNewMessagePayload({
     targetInbox: props.targetInbox,
     selectedContact: props.selectedContact,
-    message,
+    message: messageContent,
     subject,
     ccEmails,
     bccEmails,
