@@ -129,26 +129,36 @@ const normalizePhoneDigits = phoneNumber => {
 export const getPhoneSourceIdForInbox = (phoneNumber, inbox = {}) => {
   const digits = normalizePhoneDigits(phoneNumber);
   if (!digits) return '';
+  const channelType = inbox.channelType || inbox.channel_type;
+  const medium = inbox.medium;
 
-  if (inbox.channelType === INBOX_TYPES.WHATSAPP) {
+  if (channelType === INBOX_TYPES.WHATSAPP) {
     return digits;
   }
 
   if (
-    inbox.channelType === INBOX_TYPES.TWILIO &&
-    inbox.medium === TWILIO_CHANNEL_MEDIUM.WHATSAPP
+    channelType === INBOX_TYPES.TWILIO &&
+    medium === TWILIO_CHANNEL_MEDIUM.WHATSAPP
   ) {
     return `whatsapp:+${digits}`;
   }
 
-  if (inbox.channelType === INBOX_TYPES.TWILIO) {
+  if (channelType === INBOX_TYPES.TWILIO) {
     return `+${digits}`;
   }
 
-  return '';
+  if (channelType === INBOX_TYPES.EMAIL) {
+    return '';
+  }
+
+  return digits;
 };
 
-export const buildPhoneContactableInboxes = (phoneNumber, inboxesList = []) => {
+export const buildPhoneContactableInboxes = (
+  phoneNumber,
+  inboxesList = [],
+  preferredInboxId = null
+) => {
   return inboxesList
     .map(inbox => camelcaseKeys(inbox, { deep: true }))
     .map(inbox => ({
@@ -160,8 +170,14 @@ export const buildPhoneContactableInboxes = (phoneNumber, inboxesList = []) => {
         inbox.channelType === INBOX_TYPES.WHATSAPP ||
         (inbox.channelType === INBOX_TYPES.TWILIO &&
           inbox.medium === TWILIO_CHANNEL_MEDIUM.WHATSAPP);
+      const isPreferredInbox = Number(inbox.id) === Number(preferredInboxId);
 
-      return isWhatsApp && inbox.sourceId;
+      return (isWhatsApp || isPreferredInbox) && inbox.sourceId;
+    })
+    .sort((a, b) => {
+      if (Number(a.id) === Number(preferredInboxId)) return -1;
+      if (Number(b.id) === Number(preferredInboxId)) return 1;
+      return compareInboxes(a, b);
     });
 };
 

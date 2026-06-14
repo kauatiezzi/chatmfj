@@ -1,28 +1,32 @@
 <script setup>
-import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useAlert } from 'dashboard/composables';
-import { useStore } from 'dashboard/composables/store';
+import { useStore, useMapGetter } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
+import { useRouter } from 'vue-router';
 import { useMessageContext } from '../provider.js';
 import BaseBubble from './Base.vue';
-import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import Icon from 'dashboard/components-next/icon/Icon.vue';
+import { getPhoneSourceIdForInbox } from 'dashboard/components-next/NewConversation/helpers/composeConversationHelper.js';
 
 import {
   DuplicateContactException,
   ExceptionWithMessage,
 } from 'shared/helpers/CustomErrors';
 
-const { attachments } = useMessageContext();
+const { attachments, inboxId, currentUserId } = useMessageContext();
 
 const $store = useStore();
+const router = useRouter();
 const { t } = useI18n();
-const composeConversationRef = ref(null);
-const savedContactId = ref(null);
 const isStartingConversation = ref(false);
 const vCardName = ref('');
 const vCardPhoneNumber = ref('');
+const inboxGetter = useMapGetter('inboxes/getInbox');
+const contactConversationsGetter = useMapGetter(
+  'contactConversations/getAllConversationsByContactId'
+);
 
 const attachment = computed(() => {
   return attachments.value[0];
@@ -65,6 +69,10 @@ const rawPhoneNumber = computed(() => {
 
 const normalizedPhoneNumber = computed(() => {
   return rawPhoneNumber.value ? `+${rawPhoneNumber.value}` : '';
+});
+
+const currentInbox = computed(() => {
+  return inboxGetter.value(inboxId.value) || {};
 });
 
 function unfoldVCard(value) {
@@ -131,15 +139,56 @@ async function findOrCreateContact() {
   return contact;
 }
 
+function navigateToConversation(conversation) {
+  const accountId = conversation.account_id || conversation.accountId;
+  router.push(`/app/accounts/${accountId}/conversations/${conversation.id}`);
+}
+
+async function findOpenConversation(contactId) {
+  await $store.dispatch('contactConversations/get', contactId);
+  const conversations = contactConversationsGetter.value(contactId);
+  return conversations.find(
+    conversation =>
+      Number(conversation.inboxId || conversation.inbox_id) ===
+        Number(inboxId.value) && conversation.status !== 'resolved'
+  );
+}
+
+async function openOrCreateConversation(contact) {
+  const existingConversation = await findOpenConversation(contact.id);
+  if (existingConversation) {
+    navigateToConversation(existingConversation);
+    return;
+  }
+
+  const sourceId = getPhoneSourceIdForInbox(
+    normalizedPhoneNumber.value,
+    currentInbox.value
+  );
+  if (!sourceId) {
+    useAlert(t('COMPOSE_NEW_CONVERSATION.FORM.NO_INBOX_ALERT'));
+    return;
+  }
+
+  const conversation = await $store.dispatch('contactConversations/create', {
+    params: {
+      inboxId: inboxId.value,
+      sourceId,
+      contactId: contact.id,
+      assigneeId: currentUserId.value,
+    },
+    isFromWhatsApp: false,
+  });
+  navigateToConversation(conversation);
+}
+
 async function startConversation() {
   if (!formattedPhoneNumber.value) return;
 
   isStartingConversation.value = true;
   try {
     const contact = await findOrCreateContact();
-    savedContactId.value = String(contact.id);
-    await nextTick();
-    composeConversationRef.value?.show();
+    await openOrCreateConversation(contact);
   } catch (error) {
     if (error instanceof DuplicateContactException) {
       if (error.data.includes('phone_number')) {
@@ -193,26 +242,18 @@ watch(
         </div>
       </div>
       <div class="border-t border-[#ffe1cc] p-3 dark:border-[#2b211c]">
-        <ComposeConversation
+        <NextButton
           v-if="formattedPhoneNumber"
-          ref="composeConversationRef"
-          :contact-id="savedContactId"
-          align="start"
-        >
-          <template #trigger>
-            <NextButton
-              :label="t('CONVERSATION.CONTACT_CARD.START_CONVERSATION')"
-              icon="i-ph-chat-circle-dots"
-              amber
-              solid
-              sm
-              class="w-full"
-              :is-loading="isStartingConversation"
-              :disabled="!formattedPhoneNumber || isStartingConversation"
-              @click.stop.prevent="startConversation"
-            />
-          </template>
-        </ComposeConversation>
+          :label="t('CONVERSATION.CONTACT_CARD.START_CONVERSATION')"
+          icon="i-ph-chat-circle-dots"
+          amber
+          solid
+          sm
+          class="w-full"
+          :is-loading="isStartingConversation"
+          :disabled="!formattedPhoneNumber || isStartingConversation"
+          @click.stop.prevent="startConversation"
+        />
         <a
           v-else-if="isVCardAttachment"
           :href="attachment.dataUrl"

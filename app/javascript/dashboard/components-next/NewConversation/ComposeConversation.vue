@@ -25,6 +25,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  preferredInboxId: {
+    type: Number,
+    default: null,
+  },
   align: {
     type: String,
     default: 'end',
@@ -72,6 +76,7 @@ const globalConfig = useMapGetter('globalConfig/get');
 const uiFlags = useMapGetter('contactConversations/getUIFlags');
 const messageSignature = useMapGetter('getMessageSignature');
 const inboxesList = useMapGetter('inboxes/getInboxes');
+const inboxGetter = useMapGetter('inboxes/getInbox');
 
 const sendWithSignature = computed(() =>
   fetchSignatureFlagFromUISettings(targetInbox.value?.channelType)
@@ -82,6 +87,24 @@ const directUploadsEnabled = computed(
 );
 
 const activeContact = computed(() => contactById.value(props.contactId));
+
+const preferredInbox = computed(() => {
+  return props.preferredInboxId
+    ? inboxGetter.value(props.preferredInboxId)
+    : null;
+});
+
+const availableInboxesList = computed(() => {
+  if (!preferredInbox.value) return inboxesList.value;
+
+  const hasPreferredInbox = inboxesList.value.some(
+    inbox => Number(inbox.id) === Number(props.preferredInboxId)
+  );
+
+  return hasPreferredInbox
+    ? inboxesList.value
+    : [preferredInbox.value, ...inboxesList.value];
+});
 
 const onContactSearch = debounce(
   async query => {
@@ -110,6 +133,21 @@ const getContactPhoneNumber = contact => {
   return contact?.phoneNumber || contact?.phone_number || '';
 };
 
+const getPreferredTargetInbox = contactInboxes => {
+  if (!contactInboxes.length) return null;
+
+  return (
+    contactInboxes.find(
+      inbox => Number(inbox.id) === Number(props.preferredInboxId)
+    ) || (contactInboxes.length === 1 ? contactInboxes[0] : null)
+  );
+};
+
+const updateSelectedContactInboxes = (contact, contactInboxes) => {
+  selectedContact.value = { ...contact, contactInboxes };
+  targetInbox.value = getPreferredTargetInbox(contactInboxes);
+};
+
 const handleSelectedContact = async ({ value, action, ...rest }) => {
   let contact;
   if (action === 'create') {
@@ -133,21 +171,25 @@ const handleSelectedContact = async ({ value, action, ...rest }) => {
       // Merge the processed contactableInboxes with the inboxesList
       const mergedContactableInboxes = mergeInboxDetails(
         contactableInboxes,
-        inboxesList.value
+        availableInboxesList.value
       );
-      selectedContact.value.contactInboxes = mergedContactableInboxes.length
+      const contactInboxes = mergedContactableInboxes.length
         ? mergedContactableInboxes
         : buildPhoneContactableInboxes(
             getContactPhoneNumber(contact),
-            inboxesList.value
+            availableInboxesList.value,
+            props.preferredInboxId
           );
+      updateSelectedContactInboxes(contact, contactInboxes);
 
       isFetchingInboxes.value = false;
     } catch (error) {
-      selectedContact.value.contactInboxes = buildPhoneContactableInboxes(
+      const contactInboxes = buildPhoneContactableInboxes(
         getContactPhoneNumber(contact),
-        inboxesList.value
+        availableInboxesList.value,
+        props.preferredInboxId
       );
+      updateSelectedContactInboxes(contact, contactInboxes);
       isFetchingInboxes.value = false;
     }
   }
@@ -226,17 +268,18 @@ const getContactInboxes = async contact => {
   );
 
   if (currentContactInboxes.length) {
-    return mergeInboxDetails(currentContactInboxes, inboxesList.value);
+    return mergeInboxDetails(currentContactInboxes, availableInboxesList.value);
   }
 
   const contactableInboxes = await fetchContactableInboxes(contact.id);
   if (contactableInboxes.length) {
-    return mergeInboxDetails(contactableInboxes, inboxesList.value);
+    return mergeInboxDetails(contactableInboxes, availableInboxesList.value);
   }
 
   return buildPhoneContactableInboxes(
     getContactPhoneNumber(contact),
-    inboxesList.value
+    availableInboxesList.value,
+    props.preferredInboxId
   );
 };
 
@@ -259,16 +302,15 @@ watch(
       try {
         const contactInboxes = await getContactInboxes(currentContact);
         if (contactInboxRequestId.value !== requestId) return;
-        selectedContact.value = { ...currentContact, contactInboxes };
+        updateSelectedContactInboxes(currentContact, contactInboxes);
       } catch (error) {
         if (contactInboxRequestId.value !== requestId) return;
-        selectedContact.value = {
-          ...currentContact,
-          contactInboxes: buildPhoneContactableInboxes(
-            getContactPhoneNumber(currentContact),
-            inboxesList.value
-          ),
-        };
+        const contactInboxes = buildPhoneContactableInboxes(
+          getContactPhoneNumber(currentContact),
+          availableInboxesList.value,
+          props.preferredInboxId
+        );
+        updateSelectedContactInboxes(currentContact, contactInboxes);
       } finally {
         if (contactInboxRequestId.value === requestId) {
           isFetchingInboxes.value = false;
