@@ -73,12 +73,19 @@ const showTwilioContentTemplates = computed(() => {
 
 const shouldShowEmojiButton = computed(() => {
   return (
-    !props.isWhatsappInbox && !props.isTwilioWhatsAppInbox && !props.hasNoInbox
+    props.hasSelectedInbox &&
+    !props.isWhatsappInbox &&
+    !props.isTwilioWhatsAppInbox &&
+    !props.hasNoInbox
   );
 });
 
 const isRegularMessageMode = computed(() => {
-  return !props.isWhatsappInbox && !props.isTwilioWhatsAppInbox;
+  return (
+    props.hasSelectedInbox &&
+    !props.isWhatsappInbox &&
+    !props.isTwilioWhatsAppInbox
+  );
 });
 
 const shouldShowSignatureButton = computed(() => {

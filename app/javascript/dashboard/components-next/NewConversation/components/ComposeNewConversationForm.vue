@@ -156,6 +156,10 @@ const showNoInboxAlert = computed(() => {
   );
 });
 
+const hasSelectedInbox = computed(() => {
+  return !!props.selectedContact && !!props.targetInbox;
+});
+
 const isAnyDropdownActive = computed(() => {
   return (
     showContactsDropdown.value ||
@@ -336,6 +340,7 @@ const handleSendTwilioMessage = async ({ message, templateParams }) => {
 
 const shouldShowMessageEditor = computed(() => {
   return (
+    hasSelectedInbox.value &&
     !inboxTypes.value.isWhatsapp &&
     !showNoInboxAlert.value &&
     !inboxTypes.value.isTwilioWhatsapp
@@ -363,9 +368,11 @@ useKeyboardEvents({
 
 <template>
   <div
-    class="w-full md:w-[42rem] divide-y divide-n-strong overflow-visible transition-all duration-300 ease-in-out top-full flex flex-col bg-n-alpha-3 border border-n-strong shadow-sm backdrop-blur-[100px] rounded-xl min-w-0 max-h-[calc(100vh-8rem)]"
+    class="top-full flex max-h-[calc(100vh-8rem)] w-[calc(100vw-1.5rem)] min-w-0 flex-col overflow-visible rounded-xl border border-[#ffd9bf] bg-white shadow-xl transition-all duration-300 ease-in-out dark:border-[#3b2618] dark:bg-[#211712] md:w-[36rem]"
   >
-    <div class="flex-1 overflow-y-auto divide-y divide-n-strong">
+    <div
+      class="flex-1 divide-y divide-[#ffe4d2] overflow-y-auto dark:divide-[#3b2618]"
+    >
       <ContactSelector
         :contacts="contacts"
         :selected-contact="selectedContact"
@@ -383,7 +390,7 @@ useKeyboardEvents({
       />
       <InboxEmptyState v-if="showNoInboxAlert" />
       <InboxSelector
-        v-else
+        v-else-if="selectedContact"
         :target-inbox="targetInbox"
         :selected-contact="selectedContact"
         :show-inboxes-dropdown="showInboxesDropdown"
@@ -447,7 +454,7 @@ useKeyboardEvents({
       :voice-enabled="voiceCallEnabled"
       :is-loading="isCreating"
       :disable-send-button="isCreating"
-      :has-selected-inbox="!!targetInbox"
+      :has-selected-inbox="hasSelectedInbox"
       :inbox-id="targetInbox?.id"
       :has-no-inbox="showNoInboxAlert"
       :is-dropdown-active="isAnyDropdownActive"

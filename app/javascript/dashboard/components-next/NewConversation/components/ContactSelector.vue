@@ -84,6 +84,10 @@ const selectedContactLabel = computed(() => {
   return name || '';
 });
 
+const selectedContactInitial = computed(() => {
+  return selectedContactLabel.value.charAt(0).toUpperCase();
+});
+
 const errorClass = computed(() => {
   return props.hasErrors
     ? '[&_input]:placeholder:!text-n-ruby-9 [&_input]:dark:placeholder:!text-n-ruby-9'
@@ -111,15 +115,15 @@ const handleSelectedContact = item => {
 </script>
 
 <template>
-  <div class="relative flex-1 px-4 py-3 overflow-y-visible">
-    <div class="flex items-baseline w-full gap-3 min-h-7">
-      <label class="text-sm font-medium text-n-slate-11 whitespace-nowrap">
+  <div class="relative flex-1 overflow-y-visible px-4 py-3">
+    <div class="flex w-full items-center gap-3">
+      <label class="w-9 shrink-0 text-sm font-semibold text-[#7a4a24]">
         {{ t('COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.LABEL') }}
       </label>
 
       <div
         v-if="isCreatingContact"
-        class="flex items-center gap-1.5 rounded-md bg-n-alpha-2 px-3 min-h-7 min-w-0"
+        class="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-[#ffd9bf] bg-[#fff7ef] px-3"
       >
         <span class="text-sm truncate text-n-slate-12">
           {{
@@ -129,10 +133,16 @@ const handleSelectedContact = item => {
       </div>
       <div
         v-else-if="selectedContact"
-        class="flex items-center gap-1.5 rounded-md bg-n-alpha-2 min-h-7 min-w-0"
-        :class="!contactId ? 'ltr:pl-3 rtl:pr-3 ltr:pr-1 rtl:pl-1' : 'px-3'"
+        class="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-[#ffd9bf] bg-[#fff7ef] px-2"
       >
-        <span class="text-sm truncate text-n-slate-12">
+        <span
+          class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#ff6a00] text-xs font-semibold text-white"
+        >
+          {{ selectedContactInitial }}
+        </span>
+        <span
+          class="min-w-0 flex-1 truncate text-sm font-medium text-[#1f1f24]"
+        >
           {{
             isCreatingContact
               ? t(
@@ -151,28 +161,32 @@ const handleSelectedContact = item => {
           @click="emit('clearSelectedContact')"
         />
       </div>
-      <TagInput
+      <div
         v-else
-        :placeholder="
-          t(
-            'COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.TAG_INPUT_PLACEHOLDER'
-          )
-        "
-        mode="single"
-        :menu-items="contactsList"
-        :show-dropdown="showContactsDropdown"
-        :is-loading="isLoading"
-        :disabled="contactableInboxesList?.length > 0 && showInboxesDropdown"
-        allow-create
-        :type="inputType"
-        class="flex-1 min-h-7"
-        :class="errorClass"
-        focus-on-mount
-        @input="handleInput"
-        @on-click-outside="emit('updateDropdown', 'contacts', false)"
-        @add="handleSelectedContact"
-        @remove="emit('clearSelectedContact')"
-      />
+        class="min-h-10 min-w-0 flex-1 rounded-lg border border-[#ffd9bf] bg-white px-3 py-2 shadow-sm transition-colors focus-within:border-[#ff6a00] focus-within:ring-2 focus-within:ring-[#ff6a00]/10 dark:bg-[#211712]"
+      >
+        <TagInput
+          :placeholder="
+            t(
+              'COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.TAG_INPUT_PLACEHOLDER'
+            )
+          "
+          mode="single"
+          :menu-items="contactsList"
+          :show-dropdown="showContactsDropdown"
+          :is-loading="isLoading"
+          :disabled="contactableInboxesList?.length > 0 && showInboxesDropdown"
+          allow-create
+          :type="inputType"
+          class="min-h-6"
+          :class="errorClass"
+          focus-on-mount
+          @input="handleInput"
+          @on-click-outside="emit('updateDropdown', 'contacts', false)"
+          @add="handleSelectedContact"
+          @remove="emit('clearSelectedContact')"
+        />
+      </div>
     </div>
   </div>
 </template>

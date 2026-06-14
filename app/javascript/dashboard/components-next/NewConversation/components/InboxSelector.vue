@@ -50,16 +50,19 @@ const targetInboxLabel = computed(() => {
 
 <template>
   <div
-    class="flex items-center flex-1 w-full gap-3 px-4 py-3 overflow-y-visible"
+    class="flex w-full flex-1 items-center gap-3 overflow-y-visible px-4 py-3"
   >
-    <label class="mb-0.5 text-sm font-medium text-n-slate-11 whitespace-nowrap">
+    <label class="w-9 shrink-0 text-sm font-semibold text-[#7a4a24]">
       {{ t('COMPOSE_NEW_CONVERSATION.FORM.INBOX_SELECTOR.LABEL') }}
     </label>
     <div
       v-if="targetInbox"
-      class="flex items-center gap-1.5 rounded-md bg-n-alpha-2 truncate ltr:pl-3 rtl:pr-3 ltr:pr-1 rtl:pl-1 h-7 min-w-0"
+      class="flex h-10 min-w-0 flex-1 items-center gap-2 truncate rounded-lg border border-[#ffd9bf] bg-[#fff7ef] ltr:pl-3 ltr:pr-1 rtl:pl-1 rtl:pr-3"
     >
-      <span class="text-sm truncate text-n-slate-12">
+      <span
+        class="i-lucide-message-circle flex size-4 shrink-0 text-[#ff6a00]"
+      />
+      <span class="truncate text-sm font-medium text-[#1f1f24]">
         {{ targetInboxLabel }}
       </span>
       <Button
@@ -74,7 +77,7 @@ const targetInboxLabel = computed(() => {
     <div
       v-else
       v-on-click-outside="() => emit('toggleDropdown', false)"
-      class="relative flex items-center h-7"
+      class="relative flex h-10 min-w-0 flex-1 items-center"
     >
       <Spinner v-if="isFetchingInboxes" :size="16" />
       <Button
@@ -84,13 +87,13 @@ const targetInboxLabel = computed(() => {
         size="sm"
         :color="hasErrors ? 'ruby' : 'slate'"
         :disabled="!selectedContact"
-        class="hover:!no-underline"
+        class="h-10 w-full justify-start rounded-lg border border-[#ffd9bf] bg-white px-3 text-left hover:!no-underline dark:bg-[#211712]"
         @click="emit('toggleDropdown', !showInboxesDropdown)"
       />
       <DropdownMenu
         v-if="contactableInboxesList?.length > 0 && showInboxesDropdown"
         :menu-items="contactableInboxesList"
-        class="ltr:left-0 rtl:right-0 z-[100] top-8 max-h-56 w-fit max-w-sm dark:!outline-n-slate-5"
+        class="top-11 z-[100] max-h-56 w-full max-w-sm ltr:left-0 rtl:right-0 dark:!outline-n-slate-5"
         @action="emit('handleInboxAction', $event)"
       />
     </div>
