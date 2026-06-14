@@ -10,6 +10,7 @@ import { useI18n } from 'vue-i18n';
 import MessageFormatter from 'shared/helpers/MessageFormatter.js';
 import { BUS_EVENTS } from 'shared/constants/busEvents';
 import { MESSAGE_VARIANTS, ORIENTATION } from '../constants';
+import { parseGroupMessageSender } from '../helpers/groupMessage';
 
 const props = defineProps({
   hideMeta: { type: Boolean, default: false },
@@ -81,6 +82,11 @@ const replyToPreview = computed(() => {
   if (!inReplyTo) return '';
 
   const { content, attachments } = inReplyTo.value;
+  const groupSender = parseGroupMessageSender(content);
+
+  if (groupSender?.message) {
+    return new MessageFormatter(groupSender.message).formattedMessage;
+  }
 
   if (content) return new MessageFormatter(content).formattedMessage;
   if (attachments?.length) {

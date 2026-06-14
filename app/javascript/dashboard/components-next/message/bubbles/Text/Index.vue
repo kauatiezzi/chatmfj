@@ -8,6 +8,7 @@ import Icon from 'dashboard/components-next/icon/Icon.vue';
 import { MESSAGE_TYPES } from '../../constants';
 import { useMessageContext } from '../../provider.js';
 import { useTranslations } from 'dashboard/composables/useTranslations';
+import { parseGroupMessageSender } from '../../helpers/groupMessage';
 
 const { content, attachments, contentAttributes, messageType } =
   useMessageContext();
@@ -34,19 +35,7 @@ const isTemplate = computed(() => {
 });
 
 const groupSender = computed(() => {
-  const match = renderContent.value?.match(
-    /^(\+?\d[\d\s().-]{7,})\s*-\s*([^:\n]{1,80}):\s*\n*([\s\S]*)$/
-  );
-
-  if (!match) return null;
-
-  const [, phone, name, message] = match;
-  return {
-    phone: phone.trim(),
-    name: name.trim(),
-    initials: name.trim().charAt(0).toUpperCase(),
-    message: message.trim(),
-  };
+  return parseGroupMessageSender(renderContent.value);
 });
 
 const visibleContent = computed(() => {
@@ -70,10 +59,10 @@ const handleSeeOriginal = () => {
       </span>
       <div
         v-if="groupSender"
-        class="-mx-1 -mt-1 flex items-center gap-2 rounded-md bg-[#fff7ef] px-2 py-1.5 text-xs text-[#7a4a24]"
+        class="-mx-1 -mt-1 flex items-center gap-2 rounded-md border border-[#ffe1cc] bg-[#fff7ef] px-2 py-1.5 text-xs text-[#7a4a24]"
       >
         <div
-          class="flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-[#ff6a00] text-[0.625rem] font-semibold text-white"
+          class="flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-[#ff6a00] text-[0.625rem] font-semibold text-white shadow-sm"
         >
           {{ groupSender.initials }}
         </div>
