@@ -35,6 +35,8 @@ const emit = defineEmits([
   'closeMobileSidebar',
 ]);
 
+const mfjIconUrl = '/brand-assets/mfj-icon.png';
+
 const { accountScopedRoute, isOnChatwootCloud } = useAccount();
 const store = useStore();
 const searchShortcut = useKbd([`$mod`, 'k']);
@@ -773,7 +775,7 @@ const menuItems = computed(() => {
         <template v-else>
           <div class="grid flex-shrink-0 place-content-center size-7">
             <img
-              src="/brand-assets/mfj-icon.png"
+              :src="mfjIconUrl"
               alt="MFJ"
               class="size-6 rounded-md object-cover"
             />

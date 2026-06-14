@@ -22,6 +22,8 @@ defineProps({
 
 const emit = defineEmits(['showCreateAccountModal']);
 
+const mfjIconUrl = '/brand-assets/mfj-icon.png';
+
 const { t } = useI18n();
 const { accountId, currentAccount } = useAccount();
 const currentUser = useMapGetter('getCurrentUser');
@@ -61,7 +63,7 @@ const emitNewAccount = () => {
         @click="toggle"
       >
         <img
-          src="/brand-assets/mfj-icon.png"
+          :src="mfjIconUrl"
           alt="MFJ"
           class="size-7 rounded-md object-cover"
         />
