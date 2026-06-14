@@ -1461,7 +1461,11 @@ export default {
 }
 
 .reply-box__top {
-  @apply relative py-1 px-3 -mt-px;
+  @apply relative py-0.5 px-3 -mt-px;
+}
+
+.reply-box__top :deep(.ProseMirror-woot-style) {
+  @apply min-h-[3.25rem] max-h-[5.5rem];
 }
 
 .emoji-dialog {

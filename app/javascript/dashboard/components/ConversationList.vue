@@ -7,6 +7,7 @@ import ConversationItem from './ConversationItem.vue';
 import Spinner from 'dashboard/components-next/spinner/Spinner.vue';
 import IntersectionObserver from 'dashboard/components/IntersectionObserver.vue';
 import { useMapGetter } from 'dashboard/composables/store';
+import { hasUnreadMessages } from 'dashboard/helper/salesWorkspace';
 
 import wootConstants from 'dashboard/constants/globals';
 
@@ -25,6 +26,7 @@ const props = defineProps({
 const emit = defineEmits(['loadMore']);
 
 const UNLABELED_SECTION = '__unlabeled__';
+const RESPONSE_SECTION = '__response__';
 
 const conversationListRef = ref(null);
 const virtualListRef = ref(null);
@@ -51,6 +53,8 @@ const getPrimaryLabel = conversation =>
   UNLABELED_SECTION;
 
 const groupedConversationSections = computed(() => {
+  const responseConversations =
+    props.conversationList.filter(hasUnreadMessages);
   const groupedConversations = props.conversationList.reduce(
     (conversationGroups, conversation) => {
       const sectionKey = getPrimaryLabel(conversation);
@@ -72,11 +76,23 @@ const groupedConversationSections = computed(() => {
     ? [UNLABELED_SECTION, ...orderedLabelKeys, ...remainingLabelKeys]
     : [...orderedLabelKeys, ...remainingLabelKeys];
 
-  return sectionKeys.map(key => ({
+  const sections = sectionKeys.map(key => ({
     key,
     title: key === UNLABELED_SECTION ? '' : key,
     conversations: groupedConversations.get(key),
   }));
+
+  if (!responseConversations.length) return sections;
+
+  return [
+    {
+      key: RESPONSE_SECTION,
+      title: 'Responder',
+      conversations: responseConversations,
+      icon: 'i-lucide-message-circle-reply',
+    },
+    ...sections,
+  ];
 });
 
 useChatListKeyboardEvents(conversationListRef);
@@ -133,6 +149,12 @@ defineExpose({ conversationListRef });
           <span
             class="min-w-0 flex-1 truncate text-sm font-semibold text-[#1f1f24] dark:text-[#fffaf4]"
           >
+            <span
+              v-if="section.icon"
+              aria-hidden="true"
+              :class="section.icon"
+              class="mr-1 inline-block size-3.5 align-[-2px] text-[#ff6a00]"
+            />
             {{ section.title || $t('CHAT_LIST.LABEL_SECTIONS.PENDING') }}
           </span>
           <span

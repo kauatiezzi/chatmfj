@@ -41,6 +41,7 @@ const props = defineProps({
   skipLabelDedup: { type: Boolean, default: false },
   // When false, the dropdown won't auto-open on mount; it opens only on click/focus.
   autoOpenDropdown: { type: Boolean, default: true },
+  dropdownClass: { type: String, default: '' },
 });
 
 const emit = defineEmits([
@@ -248,6 +249,7 @@ const handleBlur = e => emit('blur', e);
         :menu-items="filteredMenuItems"
         :is-searching="isLoading"
         class="ltr:left-0 rtl:right-0 z-[100] top-8 max-h-56 w-[inherit] max-w-md dark:!outline-n-slate-5"
+        :class="dropdownClass"
         @action="handleDropdownAction"
       />
     </div>

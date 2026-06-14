@@ -368,7 +368,7 @@ useKeyboardEvents({
 
 <template>
   <div
-    class="top-full flex max-h-[calc(100vh-5rem)] w-[calc(100vw-1rem)] min-w-0 flex-col overflow-visible rounded-xl border border-[#ffd9bf] bg-white shadow-xl transition-all duration-300 ease-in-out dark:border-[#3b2618] dark:bg-[#211712] md:w-[44rem] xl:w-[52rem]"
+    class="top-full flex min-h-[28rem] max-h-[calc(100vh-4rem)] w-[calc(100vw-1rem)] min-w-0 flex-col overflow-visible rounded-xl border border-[#ffd9bf] bg-white shadow-xl transition-all duration-300 ease-in-out dark:border-[#3b2618] dark:bg-[#211712] md:w-[44rem] xl:w-[52rem]"
   >
     <div
       class="flex-1 divide-y divide-[#ffe4d2] overflow-y-auto dark:divide-[#3b2618]"

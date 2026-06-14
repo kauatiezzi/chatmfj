@@ -455,15 +455,7 @@ export default {
   >
     <div ref="topBannerRef">
       <Banner
-        v-if="!currentChat.can_reply"
-        color-scheme="alert"
-        class="mx-2 mt-2 overflow-hidden rounded-lg"
-        :banner-message="replyWindowBannerMessage"
-        :href-link="replyWindowLink"
-        :href-link-text="replyWindowLinkText"
-      />
-      <Banner
-        v-else-if="hasDuplicateInstagramInbox"
+        v-if="hasDuplicateInstagramInbox"
         color-scheme="alert"
         class="mx-2 mt-2 overflow-hidden rounded-lg"
         :banner-message="$t('CONVERSATION.OLD_INSTAGRAM_INBOX_REPLY_BANNER')"

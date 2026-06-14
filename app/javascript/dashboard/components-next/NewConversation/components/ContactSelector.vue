@@ -192,6 +192,7 @@ const handleSelectedContact = item => {
           allow-create
           :type="inputType"
           class="min-h-6"
+          dropdown-class="!top-10 !max-h-[26rem] !max-w-none !w-full"
           :class="errorClass"
           focus-on-mount
           @input="handleInput"
