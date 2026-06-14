@@ -8,10 +8,14 @@ import InboxName from '../InboxName.vue';
 import MoreActions from './MoreActions.vue';
 import Avatar from 'next/avatar/Avatar.vue';
 import SLACardLabel from './components/SLACardLabel.vue';
+import AddLabel from 'shared/components/ui/dropdown/AddLabel.vue';
+import LabelDropdown from 'shared/components/ui/label/LabelDropdown.vue';
 import wootConstants from 'dashboard/constants/globals';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { useInbox } from 'dashboard/composables/useInbox';
+import { useAdmin } from 'dashboard/composables/useAdmin';
+import { useConversationLabels } from 'dashboard/composables/useConversationLabels';
 import { useI18n } from 'vue-i18n';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { useAlert } from 'dashboard/composables';
@@ -31,8 +35,17 @@ const { t } = useI18n();
 const store = useStore();
 const route = useRoute();
 const conversationHeader = ref(null);
+const showSearchDropdownLabel = ref(false);
 const { width } = useElementSize(conversationHeader);
 const { isAWebWidgetInbox } = useInbox();
+const { isAdmin } = useAdmin();
+const {
+  savedLabels,
+  activeLabels,
+  accountLabels,
+  addLabelToConversation,
+  removeLabelFromConversation,
+} = useConversationLabels();
 
 const currentChat = computed(() => store.getters.getSelectedChat);
 const accountId = computed(() => store.getters.getCurrentAccountId);
@@ -70,6 +83,14 @@ const isHMACVerified = computed(() => {
 const currentContact = computed(() =>
   store.getters['contacts/getContact'](props.chat.meta.sender.id)
 );
+const contactPhoneNumber = computed(
+  () =>
+    currentContact.value?.phone_number ||
+    currentContact.value?.phoneNumber ||
+    props.chat?.meta?.sender?.phone_number ||
+    props.chat?.meta?.sender?.phoneNumber ||
+    ''
+);
 
 const isSnoozed = computed(
   () => currentChat.value.status === wootConstants.STATUS_TYPE.SNOOZED
@@ -102,12 +123,20 @@ const copyConversationId = async () => {
     // error
   }
 };
+
+const toggleLabels = () => {
+  showSearchDropdownLabel.value = !showSearchDropdownLabel.value;
+};
+
+const closeDropdownLabel = () => {
+  showSearchDropdownLabel.value = false;
+};
 </script>
 
 <template>
   <div
     ref="conversationHeader"
-    class="flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-4 pt-3 pb-2 h-24 xl:h-16 bg-white dark:bg-[#17120f] border-b border-[#ececf0] dark:border-[#2b211c]"
+    class="flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-4 py-3 min-h-24 xl:min-h-16 bg-white dark:bg-[#17120f] border-b border-[#ececf0] dark:border-[#2b211c]"
   >
     <div
       class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1"
@@ -133,6 +162,12 @@ const copyConversationId = async () => {
             class="text-sm font-semibold truncate leading-tight text-[#1f1f24] dark:text-[#fffaf4]"
           >
             {{ currentContact.name }}
+          </span>
+          <span
+            v-if="contactPhoneNumber"
+            class="shrink-0 text-xs font-medium text-[#7a7f89]"
+          >
+            {{ contactPhoneNumber }}
           </span>
           <fluent-icon
             v-if="!isHMACVerified"
@@ -167,6 +202,41 @@ const copyConversationId = async () => {
           <span v-if="isSnoozed" class="font-medium text-n-amber-10">
             {{ snoozedDisplayText }}
           </span>
+        </div>
+        <div
+          v-on-clickaway="closeDropdownLabel"
+          class="relative mt-1 flex max-w-full flex-wrap items-center gap-1"
+          @keyup.esc="closeDropdownLabel"
+        >
+          <AddLabel @add="toggleLabels" />
+          <woot-label
+            v-for="label in activeLabels"
+            :key="label.id"
+            :title="label.title"
+            :description="label.description"
+            show-close
+            :color="label.color"
+            variant="smooth"
+            class="max-w-[9rem]"
+            @remove="removeLabelFromConversation"
+          />
+
+          <div
+            :class="{
+              'block visible': showSearchDropdownLabel,
+              'hidden invisible': !showSearchDropdownLabel,
+            }"
+            class="absolute top-7 z-[9999] w-64 rounded-lg border border-n-strong bg-n-alpha-3 p-2 shadow-lg backdrop-blur-[100px] dark:border-n-strong"
+          >
+            <LabelDropdown
+              v-if="showSearchDropdownLabel"
+              :account-labels="accountLabels"
+              :selected-labels="savedLabels"
+              :allow-creation="isAdmin"
+              @add="addLabelToConversation"
+              @remove="removeLabelFromConversation"
+            />
+          </div>
         </div>
       </div>
     </div>
