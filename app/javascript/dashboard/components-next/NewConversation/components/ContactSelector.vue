@@ -133,24 +133,37 @@ const handleSelectedContact = item => {
       </div>
       <div
         v-else-if="selectedContact"
-        class="flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-lg border border-[#ffd9bf] bg-[#fff7ef] px-2"
+        class="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-xl border border-[#ffd9bf] bg-[#fff7ef] px-3 py-2"
       >
         <span
-          class="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#ff6a00] text-xs font-semibold text-white"
+          class="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#ff6a00] text-sm font-semibold text-white"
         >
-          {{ selectedContactInitial }}
+          <img
+            v-if="selectedContact.thumbnail"
+            :src="selectedContact.thumbnail"
+            class="size-full object-cover"
+            alt=""
+          />
+          <span v-else>{{ selectedContactInitial }}</span>
         </span>
-        <span
-          class="min-w-0 flex-1 truncate text-sm font-medium text-[#1f1f24]"
-        >
-          {{
-            isCreatingContact
-              ? t(
-                  'COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.CONTACT_CREATING'
-                )
-              : selectedContactLabel
-          }}
-        </span>
+        <div class="min-w-0 flex-1">
+          <span class="block truncate text-sm font-semibold text-[#1f1f24]">
+            {{
+              isCreatingContact
+                ? t(
+                    'COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.CONTACT_CREATING'
+                  )
+                : selectedContact.name || selectedContactLabel
+            }}
+          </span>
+          <span class="block truncate text-xs text-[#7a7f89]">
+            {{
+              selectedContact.email ||
+              selectedContact.phoneNumber ||
+              selectedContact.phone_number
+            }}
+          </span>
+        </div>
         <Button
           v-if="!contactId"
           variant="ghost"

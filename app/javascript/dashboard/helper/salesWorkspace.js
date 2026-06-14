@@ -61,6 +61,12 @@ export function isConversationStale(conversation) {
 
 export const SALES_QUICK_FILTERS = [
   {
+    id: 'response',
+    label: 'Responder',
+    icon: 'i-lucide-message-circle-reply',
+    matches: conversation => hasUnreadMessages(conversation),
+  },
+  {
     id: 'attention',
     label: 'Prioridade',
     icon: 'i-lucide-siren',
@@ -136,6 +142,7 @@ export const FOLLOW_UP_ACTIONS = [
 
 export function getSalesMetrics(conversations) {
   return {
+    response: conversations.filter(hasUnreadMessages).length,
     attention: conversations.filter(
       conversation =>
         hasUnreadMessages(conversation) || isFollowUpDue(conversation)

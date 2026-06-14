@@ -45,6 +45,8 @@ const store = useStore();
 const route = useRoute();
 const conversationHeader = ref(null);
 const showSearchDropdownLabel = ref(false);
+const showCustomFollowUp = ref(false);
+const customFollowUpAt = ref('');
 const { width } = useElementSize(conversationHeader);
 const { isAWebWidgetInbox } = useInbox();
 const { isAdmin } = useAdmin();
@@ -172,11 +174,35 @@ const showSelfAssignAction = computed(
   () => !!currentUser.value?.id && !isAssignedToCurrentUser.value
 );
 
-const activeSalesStage = computed(() =>
-  SALES_STAGE_ACTIONS.find(action => savedLabels.value.includes(action.id))
+const followUpBadge = computed(() => getFollowUpBadge(currentChat.value));
+
+const followUpActionItems = computed(() => [
+  ...FOLLOW_UP_ACTIONS,
+  {
+    id: 'seven_days',
+    label: '7 dias',
+    hours: 168,
+  },
+  {
+    id: 'thirty_days',
+    label: '30 dias',
+    hours: 720,
+  },
+]);
+
+const salesStageLabels = computed(() =>
+  SALES_STAGE_ACTIONS.filter(
+    action => action.id !== SALES_LABELS.FOLLOW_UP
+  ).map(action => action.id)
 );
 
-const followUpBadge = computed(() => getFollowUpBadge(currentChat.value));
+const activeSalesStage = computed(() =>
+  SALES_STAGE_ACTIONS.find(
+    action =>
+      action.id !== SALES_LABELS.FOLLOW_UP &&
+      savedLabels.value.includes(action.id)
+  )
+);
 
 const updateConversationLabels = labels => {
   store.dispatch('conversationLabels/update', {
@@ -186,10 +212,12 @@ const updateConversationLabels = labels => {
 };
 
 const setSalesLabel = labelTitle => {
-  const salesStageLabels = SALES_STAGE_ACTIONS.map(action => action.id);
-  const nextLabels = savedLabels.value.filter(
-    label => !salesStageLabels.includes(label)
-  );
+  const nextLabels =
+    labelTitle === SALES_LABELS.FOLLOW_UP
+      ? [...savedLabels.value]
+      : savedLabels.value.filter(
+          label => !salesStageLabels.value.includes(label)
+        );
 
   if (!nextLabels.includes(labelTitle)) {
     nextLabels.push(labelTitle);
@@ -204,11 +232,10 @@ const selfAssignConversation = async () => {
   useAlert(t('CONVERSATION.CHANGE_AGENT'));
 };
 
-const scheduleFollowUp = action => {
+const setFollowUpAt = followUpAt => {
   const nextLabels = savedLabels.value.includes(SALES_LABELS.FOLLOW_UP)
     ? savedLabels.value
     : [...savedLabels.value, SALES_LABELS.FOLLOW_UP];
-  const followUpAt = getSnoozeDate(action.hours);
 
   updateConversationLabels(nextLabels);
   store.dispatch('toggleStatus', {
@@ -218,6 +245,38 @@ const scheduleFollowUp = action => {
       [FOLLOW_UP_ATTRIBUTE]: followUpAt,
     },
   });
+};
+
+const scheduleFollowUp = action => {
+  setFollowUpAt(getSnoozeDate(action.hours));
+};
+
+const scheduleCustomFollowUp = () => {
+  if (!customFollowUpAt.value) return;
+
+  setFollowUpAt(new Date(customFollowUpAt.value).toISOString());
+  showCustomFollowUp.value = false;
+};
+
+const clearFollowUp = () => {
+  updateConversationLabels(
+    savedLabels.value.filter(label => label !== SALES_LABELS.FOLLOW_UP)
+  );
+  store.dispatch('toggleStatus', {
+    conversationId: currentChat.value?.id,
+    status: wootConstants.STATUS_TYPE.OPEN,
+    customAttributes: {
+      [FOLLOW_UP_ATTRIBUTE]: null,
+    },
+  });
+};
+
+const onRemoveLabel = label => {
+  if (label === SALES_LABELS.FOLLOW_UP) {
+    clearFollowUp();
+  } else {
+    removeLabelFromConversation(label);
+  }
 };
 
 const copyPhoneNumber = async () => {
@@ -243,35 +302,38 @@ const toggleLabels = () => {
 const closeDropdownLabel = () => {
   showSearchDropdownLabel.value = false;
 };
+
+const customFollowUpLabel = 'Personalizar';
+const saveFollowUpLabel = 'Salvar retorno';
 </script>
 
 <template>
   <div
     ref="conversationHeader"
-    class="relative z-20 flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-4 py-3 min-h-24 xl:min-h-16 bg-white dark:bg-[#17120f] border-b border-[#ececf0] dark:border-[#2b211c]"
+    class="relative z-20 flex w-full min-w-0 flex-1 flex-col gap-4 border-b border-[#ececf0] bg-white px-5 py-4 dark:border-[#2b211c] dark:bg-[#17120f] xl:flex-row xl:items-start xl:justify-between"
   >
     <div
-      class="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1"
+      class="flex w-full max-w-full items-start justify-start gap-3 xl:w-auto xl:flex-1"
     >
       <BackButton
         v-if="showBackButton"
         :back-url="backButtonUrl"
-        class="ltr:mr-2 rtl:ml-2"
+        class="mt-2 ltr:mr-1 rtl:ml-1"
       />
       <Avatar
         :name="currentContact.name"
         :src="currentContact.thumbnail"
-        :size="32"
+        :size="48"
         :status="currentContact.availability_status"
         hide-offline-status
         rounded-full
       />
-      <div class="flex flex-col items-start min-w-0 ml-2 rtl:ml-0 rtl:mr-2">
+      <div class="flex min-w-0 flex-1 flex-col items-start">
         <div
-          class="flex flex-row flex-wrap items-center max-w-full gap-x-2 gap-y-1 p-0 m-0"
+          class="flex max-w-full flex-row flex-wrap items-center gap-x-2 gap-y-1 p-0 m-0"
         >
           <span
-            class="min-w-0 max-w-full text-sm font-semibold truncate leading-tight text-[#1f1f24] dark:text-[#fffaf4]"
+            class="min-w-0 max-w-full truncate text-base font-semibold leading-tight text-[#1f1f24] dark:text-[#fffaf4]"
           >
             {{ currentContact.name }}
           </span>
@@ -285,23 +347,18 @@ const closeDropdownLabel = () => {
         </div>
 
         <div
-          class="flex items-center gap-1 overflow-hidden text-xs conversation--header--actions text-n-slate-11 text-ellipsis whitespace-nowrap"
+          class="mt-1 flex max-w-full flex-wrap items-center gap-2 text-xs conversation--header--actions text-n-slate-11"
         >
           <button
             type="button"
-            class="truncate text-label-small text-[#7a7f89] hover:text-[#ff6a00] !p-0 cursor-pointer"
+            class="inline-flex h-6 items-center rounded-full bg-[#f4f4f5] px-2 text-xs font-semibold text-[#6f747c] hover:text-[#ff6a00] dark:bg-[#211712]"
             @click="copyConversationId"
           >
             {{ `#${chat.id}` }}
           </button>
           <span
             v-if="contactPhoneNumber"
-            aria-hidden="true"
-            class="i-lucide-dot size-3 text-[#a3a7b0]"
-          />
-          <span
-            v-if="contactPhoneNumber"
-            class="inline-flex min-w-0 items-center gap-1 text-[#7a7f89]"
+            class="inline-flex min-w-0 items-center gap-1 rounded-full bg-[#fff7ef] px-2 py-1 font-semibold text-[#9a4b00] dark:bg-[#2a1b13] dark:text-[#ffb272]"
           >
             <span aria-hidden="true" class="i-lucide-phone size-3" />
             <span class="truncate">{{ contactPhoneNumber }}</span>
@@ -321,9 +378,10 @@ const closeDropdownLabel = () => {
             {{ snoozedDisplayText }}
           </span>
         </div>
+
         <div
           v-on-clickaway="closeDropdownLabel"
-          class="relative mt-1 flex max-w-full flex-wrap items-center gap-1"
+          class="relative mt-3 flex max-w-full flex-wrap items-center gap-1.5"
           @keyup.esc="closeDropdownLabel"
         >
           <AddLabel @add="toggleLabels" />
@@ -336,7 +394,7 @@ const closeDropdownLabel = () => {
             :color="label.color"
             variant="smooth"
             class="max-w-[9rem]"
-            @remove="removeLabelFromConversation"
+            @remove="onRemoveLabel"
           />
 
           <div
@@ -352,21 +410,19 @@ const closeDropdownLabel = () => {
               :selected-labels="savedLabels"
               :allow-creation="isAdmin"
               @add="addLabelToConversation"
-              @remove="removeLabelFromConversation"
+              @remove="onRemoveLabel"
             />
           </div>
         </div>
 
-        <div
-          class="mt-2 flex max-w-full flex-wrap items-center gap-1.5 text-xs"
-        >
+        <div class="mt-3 flex max-w-full flex-wrap items-center gap-2 text-xs">
           <button
             v-if="showSelfAssignAction"
             type="button"
-            class="inline-flex h-7 items-center gap-1 rounded-full border border-[#ffd0ad] bg-[#fff7ef] px-2.5 font-semibold text-[#ff6a00] transition hover:bg-[#ffe7d4] dark:border-[#4a2b17] dark:bg-[#2a1b13]"
+            class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#ffd0ad] bg-[#fff7ef] px-3 font-semibold text-[#ff6a00] transition hover:bg-[#ffe7d4] dark:border-[#4a2b17] dark:bg-[#2a1b13]"
             @click="selfAssignConversation"
           >
-            <span aria-hidden="true" class="i-lucide-user-check size-3.5" />
+            <span aria-hidden="true" class="i-lucide-user-check size-4" />
             <span>{{ t('CONVERSATION.ASSIGN_TO_ME') }}</span>
           </button>
 
@@ -374,14 +430,14 @@ const closeDropdownLabel = () => {
             v-for="action in SALES_STAGE_ACTIONS"
             :key="action.id"
             type="button"
-            class="inline-flex h-7 items-center gap-1 rounded-full border border-[#ececf0] bg-white px-2.5 font-medium text-[#6f747c] transition hover:border-[#ffd0ad] hover:bg-[#fff7ef] hover:text-[#ff6a00] dark:border-[#30251f] dark:bg-[#211712]"
+            class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#ececf0] bg-white px-3 font-semibold text-[#6f747c] transition hover:border-[#ffd0ad] hover:bg-[#fff7ef] hover:text-[#ff6a00] dark:border-[#30251f] dark:bg-[#211712]"
             :class="{
               'border-[#ffb272] bg-[#fff1e5] text-[#ff6a00] dark:bg-[#321f12]':
                 activeSalesStage?.id === action.id,
             }"
             @click="setSalesLabel(action.id)"
           >
-            <span aria-hidden="true" :class="action.icon" class="size-3.5" />
+            <span aria-hidden="true" :class="action.icon" class="size-4" />
             <span>{{ action.label }}</span>
           </button>
 
@@ -390,38 +446,74 @@ const closeDropdownLabel = () => {
           />
 
           <button
-            v-for="action in FOLLOW_UP_ACTIONS"
+            v-for="action in followUpActionItems"
             :key="action.id"
             type="button"
-            class="inline-flex h-7 items-center gap-1 rounded-full bg-[#fff7ef] px-2.5 font-medium text-[#9a4b00] transition hover:bg-[#ffe7d4] dark:bg-[#2a1b13] dark:text-[#ffb272]"
+            class="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#fff7ef] px-3 font-semibold text-[#9a4b00] transition hover:bg-[#ffe7d4] dark:bg-[#2a1b13] dark:text-[#ffb272]"
             @click="scheduleFollowUp(action)"
           >
-            <span aria-hidden="true" class="i-lucide-alarm-clock size-3.5" />
+            <span aria-hidden="true" class="i-lucide-alarm-clock size-4" />
             <span>{{ action.label }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#ffd0ad] bg-white px-3 font-semibold text-[#9a4b00] transition hover:bg-[#fff7ef] dark:border-[#3a281f] dark:bg-[#211712]"
+            @click="showCustomFollowUp = !showCustomFollowUp"
+          >
+            <span aria-hidden="true" class="i-lucide-calendar-plus size-4" />
+            <span>{{ customFollowUpLabel }}</span>
           </button>
 
           <button
             v-if="rawContactPhoneNumber"
             v-tooltip.top="'Copiar telefone'"
             type="button"
-            class="inline-flex size-7 items-center justify-center rounded-full border border-[#ececf0] bg-white text-[#6f747c] transition hover:border-[#ffd0ad] hover:bg-[#fff7ef] hover:text-[#ff6a00] dark:border-[#30251f] dark:bg-[#211712]"
+            class="inline-flex size-9 items-center justify-center rounded-lg border border-[#ececf0] bg-white text-[#6f747c] transition hover:border-[#ffd0ad] hover:bg-[#fff7ef] hover:text-[#ff6a00] dark:border-[#30251f] dark:bg-[#211712]"
             @click="copyPhoneNumber"
           >
-            <span aria-hidden="true" class="i-lucide-copy size-3.5" />
+            <span aria-hidden="true" class="i-lucide-copy size-4" />
           </button>
 
-          <span
+          <div
             v-if="followUpBadge"
-            class="inline-flex h-7 items-center gap-1 rounded-full px-2.5 font-semibold"
+            class="inline-flex h-9 items-center gap-2 rounded-lg px-3 font-semibold"
             :class="
               followUpBadge.isDue
                 ? 'bg-[#ff6a00] text-white'
                 : 'bg-[#fff7ef] text-[#9a4b00] dark:bg-[#2a1b13] dark:text-[#ffb272]'
             "
           >
-            <span aria-hidden="true" class="i-lucide-calendar-clock size-3.5" />
+            <span aria-hidden="true" class="i-lucide-calendar-clock size-4" />
             <span>{{ followUpBadge.label }}</span>
-          </span>
+            <button
+              v-tooltip.top="'Remover retorno'"
+              type="button"
+              class="inline-flex size-5 items-center justify-center rounded-full bg-white/30 hover:bg-white/50"
+              @click="clearFollowUp"
+            >
+              <span aria-hidden="true" class="i-lucide-x size-3.5" />
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-if="showCustomFollowUp"
+          class="mt-2 flex max-w-full flex-wrap items-center gap-2 rounded-lg border border-[#ffd0ad] bg-[#fff7ef] p-2 dark:border-[#3a281f] dark:bg-[#211712]"
+        >
+          <input
+            v-model="customFollowUpAt"
+            type="datetime-local"
+            class="h-9 rounded-md border border-[#ffd0ad] bg-white px-3 text-sm text-[#1f1f24] outline-none focus:border-[#ff6a00] dark:border-[#3a281f] dark:bg-[#17120f] dark:text-[#fffaf4]"
+          />
+          <button
+            type="button"
+            class="inline-flex h-9 items-center gap-1 rounded-md bg-[#ff6a00] px-3 text-sm font-semibold text-white hover:bg-[#e65f00]"
+            @click="scheduleCustomFollowUp"
+          >
+            <span aria-hidden="true" class="i-lucide-check size-4" />
+            <span>{{ saveFollowUpLabel }}</span>
+          </button>
         </div>
       </div>
     </div>

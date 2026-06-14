@@ -435,10 +435,10 @@ const salesMetrics = computed(() => getSalesMetrics(conversationList.value));
 
 const salesMetricItems = computed(() => [
   {
-    id: 'attention',
-    label: 'Prioridade',
-    value: salesMetrics.value.attention,
-    icon: 'i-lucide-bell-dot',
+    id: 'response',
+    label: 'Responder',
+    value: salesMetrics.value.response,
+    icon: 'i-lucide-message-circle-reply',
   },
   {
     id: 'follow_up',
