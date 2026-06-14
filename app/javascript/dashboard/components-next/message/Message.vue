@@ -519,7 +519,7 @@ provideMessageContext({
   <div
     v-if="shouldRenderMessage"
     :id="`message${props.id}`"
-    class="flex w-full mb-2 message-bubble-container group/message"
+    class="flex w-full mb-1.5 message-bubble-container group/message"
     :data-message-id="props.id"
     :class="[
       flexOrientationClass,
@@ -541,7 +541,7 @@ provideMessageContext({
           'w-full': variant === MESSAGE_VARIANTS.EMAIL,
         },
       ]"
-      class="gap-x-2"
+      class="gap-x-1.5"
       :style="{
         gridTemplateAreas: gridTemplate,
       }"
@@ -556,8 +556,8 @@ provideMessageContext({
       <div
         class="[grid-area:bubble] flex"
         :class="{
-          'ltr:ml-8 rtl:mr-8 justify-end': orientation === ORIENTATION.RIGHT,
-          'ltr:mr-8 rtl:ml-8': orientation === ORIENTATION.LEFT,
+          'ltr:ml-10 rtl:mr-10 justify-end': orientation === ORIENTATION.RIGHT,
+          'ltr:mr-10 rtl:ml-10': orientation === ORIENTATION.LEFT,
           'min-w-0': variant === MESSAGE_VARIANTS.EMAIL,
         }"
         @contextmenu="openContextMenu($event)"

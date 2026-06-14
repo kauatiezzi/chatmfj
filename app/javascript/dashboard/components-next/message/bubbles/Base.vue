@@ -19,15 +19,15 @@ const { variant, orientation, inReplyTo, shouldGroupWithNext } =
   useMessageContext();
 const { t } = useI18n();
 
-const varaintBaseMap = {
-  [MESSAGE_VARIANTS.AGENT]: 'bg-[#ff6a00] text-white shadow-sm',
+const variantBaseMap = {
+  [MESSAGE_VARIANTS.AGENT]: 'bg-[#d9fdd3] text-[#111b21] shadow-sm',
   [MESSAGE_VARIANTS.PRIVATE]:
     'bg-[#fff4cf] dark:bg-[#3a260f] text-[#4b3320] dark:text-[#ffe8b8] [&_.prosemirror-mention-node]:font-semibold',
   [MESSAGE_VARIANTS.USER]:
-    'bg-[#fffaf4] dark:bg-[#211712] text-[#17120f] dark:text-[#fffaf4] shadow-sm',
+    'bg-white dark:bg-[#211712] text-[#111b21] dark:text-[#fffaf4] shadow-sm',
   [MESSAGE_VARIANTS.ACTIVITY]: 'bg-n-alpha-1 text-n-slate-11 text-sm',
-  [MESSAGE_VARIANTS.BOT]: 'bg-[#1f1a16] text-white shadow-sm',
-  [MESSAGE_VARIANTS.TEMPLATE]: 'bg-[#1f1a16] text-white shadow-sm',
+  [MESSAGE_VARIANTS.BOT]: 'bg-[#d9fdd3] text-[#111b21] shadow-sm',
+  [MESSAGE_VARIANTS.TEMPLATE]: 'bg-[#d9fdd3] text-[#111b21] shadow-sm',
   [MESSAGE_VARIANTS.ERROR]: 'bg-n-ruby-4 text-n-ruby-12',
   [MESSAGE_VARIANTS.EMAIL]: 'w-full',
   [MESSAGE_VARIANTS.UNSUPPORTED]:
@@ -36,9 +36,9 @@ const varaintBaseMap = {
 
 const orientationMap = {
   [ORIENTATION.LEFT]:
-    'left-bubble rounded-xl ltr:rounded-bl-sm rtl:rounded-br-sm',
+    'left-bubble rounded-lg ltr:rounded-tl-sm rtl:rounded-tr-sm',
   [ORIENTATION.RIGHT]:
-    'right-bubble rounded-xl ltr:rounded-br-sm rtl:rounded-bl-sm',
+    'right-bubble rounded-lg ltr:rounded-tr-sm rtl:rounded-tl-sm',
   [ORIENTATION.CENTER]: 'rounded-md',
 };
 
@@ -53,7 +53,7 @@ const flexOrientationClass = computed(() => {
 });
 
 const messageClass = computed(() => {
-  const classToApply = [varaintBaseMap[variant.value]];
+  const classToApply = [variantBaseMap[variant.value]];
 
   if (variant.value !== MESSAGE_VARIANTS.ACTIVITY) {
     classToApply.push(orientationMap[orientation.value]);
@@ -96,11 +96,11 @@ const replyToPreview = computed(() => {
 
 <template>
   <div
-    class="text-sm"
+    class="text-sm leading-5"
     :class="[
       messageClass,
       {
-        'max-w-lg': variant !== MESSAGE_VARIANTS.EMAIL,
+        'max-w-[min(40rem,78vw)]': variant !== MESSAGE_VARIANTS.EMAIL,
       },
     ]"
   >

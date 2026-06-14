@@ -510,7 +510,9 @@ export default {
         />
       </template>
     </MessageList>
-    <div class="flex relative flex-col bg-[#efe1d2] dark:bg-[#120f0d] px-3 pb-3">
+    <div
+      class="flex relative flex-col bg-[#efe7dd] dark:bg-[#120f0d] px-2 pb-2 sm:px-4 sm:pb-4"
+    >
       <div
         v-if="isAnyoneTyping"
         class="absolute flex items-center w-full h-0 -top-7"

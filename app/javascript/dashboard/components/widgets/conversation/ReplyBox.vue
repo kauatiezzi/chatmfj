@@ -1449,7 +1449,7 @@ export default {
 }
 
 .reply-box {
-  @apply relative mb-2 mx-2 border border-n-weak rounded-xl bg-n-solid-1;
+  @apply relative mb-0 mx-0 border border-[#d8c3af] rounded-2xl bg-[#fffaf4] shadow-sm dark:bg-[#17120f] dark:border-[#2b211c];
 
   &.is-private {
     @apply bg-n-solid-amber dark:border-n-amber-3/10 border-n-amber-12/5;
@@ -1461,7 +1461,7 @@ export default {
 }
 
 .reply-box__top {
-  @apply relative py-0 px-3 -mt-px;
+  @apply relative py-1 px-3 -mt-px;
 }
 
 .emoji-dialog {

@@ -2,10 +2,16 @@ class ConversationBuilder
   pattr_initialize [:params!, :contact_inbox!]
 
   def perform
-    look_up_exising_conversation || create_new_conversation
+    @contact_inbox.with_lock do
+      look_up_active_conversation || look_up_exising_conversation || create_new_conversation
+    end
   end
 
   private
+
+  def look_up_active_conversation
+    @contact_inbox.conversations.where.not(status: :resolved).last
+  end
 
   def look_up_exising_conversation
     return unless @contact_inbox.inbox.lock_to_single_conversation?

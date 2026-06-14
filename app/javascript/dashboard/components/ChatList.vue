@@ -922,10 +922,10 @@ watch(conversationFilters, (newVal, oldVal) => {
 
 <template>
   <div
-    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-[#fffaf4] dark:bg-[#17120f] relative overflow-hidden rounded-3xl border border-[#ead8c7] shadow-sm"
+    class="flex flex-col flex-shrink-0 conversations-list-wrap bg-[#f8f2eb] dark:bg-[#17120f] relative overflow-hidden border-r border-[#d8c3af] dark:border-[#2b211c] lg:rounded-2xl lg:border lg:shadow-sm"
     :class="[
       { hidden: !showConversationList },
-      isOnExpandedLayout ? 'basis-full' : 'w-[340px] 2xl:w-[412px]',
+      isOnExpandedLayout ? 'basis-full' : 'w-[360px] 2xl:w-[420px]',
     ]"
   >
     <slot />
@@ -973,7 +973,9 @@ watch(conversationFilters, (newVal, oldVal) => {
       @chat-tab-change="updateAssigneeTab"
     />
 
-    <div class="flex items-center gap-2 px-4 py-3 bg-[#fffaf4] dark:bg-[#17120f]">
+    <div
+      class="flex items-center gap-2 px-3 py-3 bg-[#f8f2eb] dark:bg-[#17120f] border-b border-[#ead8c7] dark:border-[#2b211c]"
+    >
       <div class="relative flex-1 min-w-0">
         <span
           class="absolute -translate-y-1/2 i-lucide-search left-3 rtl:left-auto rtl:right-3 top-1/2 size-4 text-n-slate-10"
@@ -981,7 +983,7 @@ watch(conversationFilters, (newVal, oldVal) => {
         <input
           v-model="searchQuery"
           type="search"
-          class="w-full h-10 px-3 ltr:pl-9 rtl:pr-9 text-sm rounded-full outline outline-1 outline-[#ead8c7] bg-white dark:bg-[#211712] text-[#17120f] dark:text-[#fffaf4] placeholder:text-[#9b8b7b] focus:outline-[#ff5b00]"
+          class="w-full h-10 px-3 ltr:pl-9 rtl:pr-9 text-sm rounded-lg outline outline-1 outline-[#dfcbb8] bg-[#fffaf4] dark:bg-[#211712] text-[#17120f] dark:text-[#fffaf4] placeholder:text-[#9b8b7b] focus:outline-[#00a884]"
           :placeholder="$t('CHAT_LIST.SEARCH.INPUT')"
         />
       </div>
@@ -1000,7 +1002,9 @@ watch(conversationFilters, (newVal, oldVal) => {
     </div>
 
     <p
-      v-if="!chatListLoading && !filteredConversationList.length && !searchQuery"
+      v-if="
+        !chatListLoading && !filteredConversationList.length && !searchQuery
+      "
       class="flex items-center justify-center p-4 overflow-auto"
     >
       {{ $t('CHAT_LIST.LIST.404') }}

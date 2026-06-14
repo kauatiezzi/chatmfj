@@ -1,10 +1,13 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, ref } from 'vue';
 import { useAlert } from 'dashboard/composables';
 import { useStore } from 'dashboard/composables/store';
 import { useI18n } from 'vue-i18n';
 import { useMessageContext } from '../provider.js';
-import BaseAttachmentBubble from './BaseAttachment.vue';
+import BaseBubble from './Base.vue';
+import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation.vue';
+import NextButton from 'dashboard/components-next/button/Button.vue';
+import Icon from 'dashboard/components-next/icon/Icon.vue';
 
 import {
   DuplicateContactException,
@@ -15,19 +18,26 @@ const { attachments } = useMessageContext();
 
 const $store = useStore();
 const { t } = useI18n();
+const composeConversationRef = ref(null);
+const savedContactId = ref(null);
+const isStartingConversation = ref(false);
 
 const attachment = computed(() => {
   return attachments.value[0];
 });
 
 const phoneNumber = computed(() => {
-  return attachment.value.fallbackTitle;
+  return attachment.value?.fallbackTitle || '';
 });
 
 const contactName = computed(() => {
   const { meta } = attachment.value ?? {};
   const { firstName, lastName } = meta ?? {};
-  return `${firstName ?? ''} ${lastName ?? ''}`.trim();
+  return `${firstName ?? ''} ${lastName ?? ''}`.trim() || phoneNumber.value;
+});
+
+const contactInitial = computed(() => {
+  return contactName.value.charAt(0).toUpperCase();
 });
 
 const formattedPhoneNumber = computed(() => {
@@ -38,10 +48,14 @@ const rawPhoneNumber = computed(() => {
   return phoneNumber.value.replace(/\D/g, '');
 });
 
+const normalizedPhoneNumber = computed(() => {
+  return rawPhoneNumber.value ? `+${rawPhoneNumber.value}` : '';
+});
+
 function getContactObject() {
   const contactItem = {
     name: contactName.value,
-    phone_number: `+${rawPhoneNumber.value}`,
+    phone_number: normalizedPhoneNumber.value,
   };
   return contactItem;
 }
@@ -63,20 +77,24 @@ async function filterContactByNumber(searchCandidate) {
   return contacts.shift();
 }
 
-function openContactNewTab(contactId) {
-  const accountId = window.location.pathname.split('/')[3];
-  const url = `/app/accounts/${accountId}/contacts/${contactId}`;
-  window.open(url, '_blank');
+async function findOrCreateContact() {
+  let contact = await filterContactByNumber(normalizedPhoneNumber.value);
+  if (!contact) {
+    contact = await $store.dispatch('contacts/create', getContactObject());
+    useAlert(t('CONTACT_FORM.SUCCESS_MESSAGE'));
+  }
+  return contact;
 }
 
-async function addContact() {
+async function startConversation() {
+  if (!formattedPhoneNumber.value) return;
+
+  isStartingConversation.value = true;
   try {
-    let contact = await filterContactByNumber(rawPhoneNumber);
-    if (!contact) {
-      contact = await $store.dispatch('contacts/create', getContactObject());
-      useAlert(t('CONTACT_FORM.SUCCESS_MESSAGE'));
-    }
-    openContactNewTab(contact.id);
+    const contact = await findOrCreateContact();
+    savedContactId.value = String(contact.id);
+    await nextTick();
+    composeConversationRef.value?.show();
   } catch (error) {
     if (error instanceof DuplicateContactException) {
       if (error.data.includes('phone_number')) {
@@ -87,22 +105,57 @@ async function addContact() {
     } else {
       useAlert(t('CONTACT_FORM.ERROR_MESSAGE'));
     }
+  } finally {
+    isStartingConversation.value = false;
   }
 }
-
-const action = computed(() => ({
-  label: t('CONVERSATION.SAVE_CONTACT'),
-  onClick: addContact,
-}));
 </script>
 
 <template>
-  <BaseAttachmentBubble
-    icon="i-teenyicons-user-circle-solid"
-    icon-bg-color="bg-[#D6409F]"
-    sender-translation-key="CONVERSATION.SHARED_ATTACHMENT.CONTACT"
-    :title="contactName"
-    :content="phoneNumber"
-    :action="formattedPhoneNumber ? action : null"
-  />
+  <BaseBubble class="overflow-hidden p-0" data-bubble-name="contact">
+    <div class="w-72 max-w-[78vw] bg-white dark:bg-[#211712]">
+      <div class="flex items-start gap-3 p-4">
+        <div
+          class="flex size-12 flex-shrink-0 items-center justify-center rounded-full bg-[#00a884] text-base font-semibold text-white"
+        >
+          {{ contactInitial }}
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-center gap-1.5 text-xs text-[#667781]">
+            <Icon icon="i-lucide-contact" class="size-3.5" />
+            <span>
+              {{ t('CONVERSATION.CONTACT_CARD.SHARED_CONTACT') }}
+            </span>
+          </div>
+          <div class="mt-1 truncate text-sm font-semibold text-[#111b21]">
+            {{ contactName }}
+          </div>
+          <div class="mt-0.5 truncate text-sm text-[#667781]">
+            {{ phoneNumber }}
+          </div>
+        </div>
+      </div>
+      <div class="border-t border-[#e9edef] p-3 dark:border-[#2b211c]">
+        <ComposeConversation
+          ref="composeConversationRef"
+          :contact-id="savedContactId"
+          align="start"
+        >
+          <template #trigger>
+            <NextButton
+              :label="t('CONVERSATION.CONTACT_CARD.START_CONVERSATION')"
+              icon="i-ph-chat-circle-dots"
+              teal
+              solid
+              sm
+              class="w-full"
+              :is-loading="isStartingConversation"
+              :disabled="!formattedPhoneNumber || isStartingConversation"
+              @click.stop.prevent="startConversation"
+            />
+          </template>
+        </ComposeConversation>
+      </div>
+    </div>
+  </BaseBubble>
 </template>

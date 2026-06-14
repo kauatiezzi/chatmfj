@@ -102,11 +102,11 @@ watch(
 
 <template>
   <div
-    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border-b border-[#f0dfcf] hover:bg-[#fff0e1] dark:hover:bg-[#241812] group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-[#fffaf4] before:pointer-events-none hover:before:content-['']"
+    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border-b border-[#e7d6c5] hover:bg-[#efe4d8] dark:hover:bg-[#241812] group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-[#f8f2eb] before:pointer-events-none hover:before:content-['']"
     :class="{
-      'active animate-card-select bg-[#fff0e1] dark:bg-[#241812] !border-[#ff5b00]/25':
+      'active animate-card-select bg-[#e7f7ef] dark:bg-[#1c2a24] !border-[#00a884]/30':
         isActiveChat,
-      'selected bg-[#fff5ec] dark:bg-[#211712] !border-[#ff5b00]/25': selected,
+      'selected bg-[#eef8f2] dark:bg-[#211712] !border-[#00a884]/30': selected,
       'px-0': compact,
       'px-3': !compact,
     }"
@@ -122,9 +122,9 @@ watch(
         v-if="!hideThumbnail"
         :name="currentContact.name"
         :src="currentContact.thumbnail"
-        :size="32"
+        :size="40"
         :status="currentContact.availability_status"
-        :class="!showInboxName ? 'mt-4' : 'mt-8'"
+        :class="!showInboxName ? 'mt-3' : 'mt-7'"
         hide-offline-status
       >
         <template #overlay="{ size }">
@@ -169,7 +169,7 @@ watch(
         </div>
       </div>
       <h4
-        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-[#17120f] dark:text-[#fffaf4]"
+        class="conversation--user text-sm my-0 mx-2 capitalize pt-0.5 text-ellipsis overflow-hidden whitespace-nowrap flex-1 min-w-0 ltr:pr-16 rtl:pl-16 text-[#111b21] dark:text-[#fffaf4]"
         :class="hasUnread ? 'font-semibold' : 'font-medium'"
       >
         {{ currentContact.name }}
@@ -185,7 +185,7 @@ watch(
         v-else-if="lastMessageInChat"
         key="message-preview"
         :message="lastMessageInChat"
-        class="my-0 mx-2 leading-6 h-6 flex-1 min-w-0 text-sm"
+        class="my-0 mx-2 leading-6 h-6 flex-1 min-w-0 text-sm text-[#667781]"
         :class="messagePreviewClass"
       />
       <p

@@ -201,6 +201,9 @@ const onPopoverHide = () => {
   emit('close');
 };
 
+const show = () => popoverRef.value?.show();
+const hide = () => popoverRef.value?.hide();
+
 watch(
   activeContact,
   (currentContact, previousContact) => {
@@ -227,6 +230,8 @@ watch(
 );
 
 onMounted(() => resetContacts());
+
+defineExpose({ show, hide });
 </script>
 
 <template>
