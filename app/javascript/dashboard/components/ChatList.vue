@@ -983,7 +983,7 @@ watch(conversationFilters, (newVal, oldVal) => {
         <input
           v-model="searchQuery"
           type="search"
-          class="w-full h-10 px-3 ltr:pl-9 rtl:pr-9 text-sm rounded-full outline outline-1 outline-[#ececf0] bg-white dark:bg-[#211712] text-[#1f1f24] dark:text-[#fffaf4] placeholder:text-[#9aa0aa] focus:outline-[#e91e7d]"
+          class="w-full h-10 px-3 ltr:pl-9 rtl:pr-9 text-sm rounded-full outline outline-1 outline-[#ececf0] bg-white dark:bg-[#211712] text-[#1f1f24] dark:text-[#fffaf4] placeholder:text-[#9aa0aa] focus:outline-[#ff6a00]"
           :placeholder="$t('CHAT_LIST.SEARCH.INPUT')"
         />
       </div>

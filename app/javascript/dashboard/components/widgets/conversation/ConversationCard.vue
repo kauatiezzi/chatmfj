@@ -102,11 +102,11 @@ watch(
 
 <template>
   <div
-    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border-b border-[#eeeef2] hover:bg-[#fff4fa] dark:hover:bg-[#241812] group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-[#fbfbfc] before:pointer-events-none hover:before:content-['']"
+    class="relative flex items-start flex-grow-0 flex-shrink-0 w-auto max-w-full py-0 cursor-pointer conversation border-b border-[#eeeef2] hover:bg-[#fff4ec] dark:hover:bg-[#241812] group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-[#fbfbfc] before:pointer-events-none hover:before:content-['']"
     :class="{
-      'active animate-card-select bg-[#fff0f7] dark:bg-[#2b1721] !border-[#e91e7d]/30':
+      'active animate-card-select bg-[#fff0e6] dark:bg-[#2b1d17] !border-[#ff6a00]/30':
         isActiveChat,
-      'selected bg-[#fff6fa] dark:bg-[#211712] !border-[#e91e7d]/30': selected,
+      'selected bg-[#fff7f0] dark:bg-[#211712] !border-[#ff6a00]/30': selected,
       'px-0': compact,
       'px-3': !compact,
     }"

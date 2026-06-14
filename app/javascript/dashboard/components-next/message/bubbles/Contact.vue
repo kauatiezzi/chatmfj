@@ -116,7 +116,7 @@ async function startConversation() {
     <div class="w-72 max-w-[78vw] bg-white dark:bg-[#211712]">
       <div class="flex items-start gap-3 p-4">
         <div
-          class="flex size-12 flex-shrink-0 items-center justify-center rounded-full bg-[#e91e7d] text-base font-semibold text-white"
+          class="flex size-12 flex-shrink-0 items-center justify-center rounded-full bg-[#ff6a00] text-base font-semibold text-white"
         >
           {{ contactInitial }}
         </div>
@@ -135,7 +135,7 @@ async function startConversation() {
           </div>
         </div>
       </div>
-      <div class="border-t border-[#f0d5e2] p-3 dark:border-[#2b211c]">
+      <div class="border-t border-[#ffe1cc] p-3 dark:border-[#2b211c]">
         <ComposeConversation
           ref="composeConversationRef"
           :contact-id="savedContactId"
@@ -145,7 +145,7 @@ async function startConversation() {
             <NextButton
               :label="t('CONVERSATION.CONTACT_CARD.START_CONVERSATION')"
               icon="i-ph-chat-circle-dots"
-              ruby
+              amber
               solid
               sm
               class="w-full"

@@ -73,14 +73,14 @@ const toggleConversationLayout = () => {
         v-if="
           allCount > 0 && hasAppliedFiltersOrActiveFolders && !isListLoading
         "
-        class="px-2 py-1 my-0.5 mx-1 rounded-full capitalize bg-[#e91e7d]/10 text-xxs text-[#e91e7d] font-semibold shrink-0"
+        class="px-2 py-1 my-0.5 mx-1 rounded-full capitalize bg-[#ff6a00]/10 text-xxs text-[#ff6a00] font-semibold shrink-0"
         :title="allCount"
       >
         {{ formattedAllCount }}
       </span>
       <span
         v-if="!hasAppliedFiltersOrActiveFolders"
-        class="px-2 py-1 my-0.5 mx-1 rounded-full capitalize bg-[#e91e7d]/10 text-xxs text-[#e91e7d] font-semibold shrink-0"
+        class="px-2 py-1 my-0.5 mx-1 rounded-full capitalize bg-[#ff6a00]/10 text-xxs text-[#ff6a00] font-semibold shrink-0"
       >
         {{ $t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${activeStatus}.TEXT`) }}
       </span>
