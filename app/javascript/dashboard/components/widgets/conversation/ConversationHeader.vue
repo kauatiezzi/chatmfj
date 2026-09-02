@@ -205,25 +205,54 @@ const activeSalesStage = computed(() =>
 );
 
 const updateConversationLabels = labels => {
-  store.dispatch('conversationLabels/update', {
+  return store.dispatch('conversationLabels/update', {
     conversationId: currentChat.value?.id,
     labels,
   });
 };
 
-const setSalesLabel = labelTitle => {
-  const nextLabels =
+const setSalesLabel = async labelTitle => {
+  const baseLabels =
     labelTitle === SALES_LABELS.FOLLOW_UP
       ? [...savedLabels.value]
       : savedLabels.value.filter(
           label => !salesStageLabels.value.includes(label)
         );
+  const nextLabels = [SALES_LABELS.SOLD, SALES_LABELS.LOST].includes(labelTitle)
+    ? baseLabels.filter(label => label !== SALES_LABELS.FOLLOW_UP)
+    : baseLabels;
 
   if (!nextLabels.includes(labelTitle)) {
     nextLabels.push(labelTitle);
   }
 
-  updateConversationLabels(nextLabels);
+  await updateConversationLabels(nextLabels);
+};
+
+const setConversationStatus = status => {
+  return store.dispatch('toggleStatus', {
+    conversationId: currentChat.value?.id,
+    status,
+    snoozedUntil: null,
+    customAttributes: {
+      [FOLLOW_UP_ATTRIBUTE]: null,
+    },
+  });
+};
+
+const setSalesStage = async labelTitle => {
+  await setSalesLabel(labelTitle);
+
+  if (labelTitle === SALES_LABELS.SOLD) {
+    await setConversationStatus(wootConstants.STATUS_TYPE.SNOOZED);
+    useAlert('Conversa marcada como vendida.');
+    return;
+  }
+
+  if (labelTitle === SALES_LABELS.LOST) {
+    await setConversationStatus(wootConstants.STATUS_TYPE.RESOLVED);
+    useAlert('Conversa marcada como perdida.');
+  }
 };
 
 const selfAssignConversation = async () => {
@@ -435,7 +464,7 @@ const saveFollowUpLabel = 'Salvar retorno';
               'border-[#ffb272] bg-[#fff1e5] text-[#ff6a00] dark:bg-[#321f12]':
                 activeSalesStage?.id === action.id,
             }"
-            @click="setSalesLabel(action.id)"
+            @click="setSalesStage(action.id)"
           >
             <span aria-hidden="true" :class="action.icon" class="size-4" />
             <span>{{ action.label }}</span>

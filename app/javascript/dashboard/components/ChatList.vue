@@ -96,6 +96,7 @@ const assignedNotificationsEnabled = ref(
 );
 const assignedNotificationState = new Map();
 let assignedNotificationBaselineReady = false;
+let ignoreNextSalesFilterStatusSync = false;
 // chatsOnView is to store the chats that are currently visible on the screen,
 // which mirrors the conversationList.
 const chatsOnView = ref([]);
@@ -858,10 +859,18 @@ function updateAssigneeTab(selectedTab) {
 function onBasicFilterChange(value, type) {
   if (type === 'status') {
     activeStatus.value = value;
+    ignoreNextSalesFilterStatusSync = activeSalesFilter.value !== 'all';
+    activeSalesFilter.value = 'all';
   } else {
     activeSortBy.value = value;
   }
   resetAndFetchData();
+}
+
+function getStatusForSalesFilter(filterId) {
+  if (filterId === 'sold') return wootConstants.STATUS_TYPE.SNOOZED;
+  if (filterId === 'lost') return wootConstants.STATUS_TYPE.RESOLVED;
+  return wootConstants.STATUS_TYPE.OPEN;
 }
 
 function openLastSavedItemInFolder() {
@@ -1120,8 +1129,18 @@ watch(searchQuery, () => {
   resetBulkActions();
 });
 
-watch(activeSalesFilter, () => {
+watch(activeSalesFilter, filterId => {
   resetBulkActions();
+  if (ignoreNextSalesFilterStatusSync) {
+    ignoreNextSalesFilterStatusSync = false;
+    return;
+  }
+
+  const nextStatus = getStatusForSalesFilter(filterId);
+  if (activeStatus.value !== nextStatus) {
+    activeStatus.value = nextStatus;
+    resetAndFetchData();
+  }
 });
 
 watch(conversationList, watchAssignedConversationNotifications, {
@@ -1311,7 +1330,6 @@ watch(conversationFilters, (newVal, oldVal) => {
       :all-conversations-selected="allConversationsSelected"
       :selected-inboxes="uniqueInboxes"
       :show-open-action="allSelectedConversationsStatus('open')"
-      :show-resolved-action="allSelectedConversationsStatus('resolved')"
       :show-snoozed-action="allSelectedConversationsStatus('snoozed')"
       :class="isOnExpandedLayout && 'sm:!w-[24rem] !w-full'"
       @select-all-conversations="toggleSelectAll"

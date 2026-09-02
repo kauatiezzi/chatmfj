@@ -97,6 +97,12 @@ export const SALES_QUICK_FILTERS = [
     icon: 'i-lucide-trophy',
     matches: conversation => hasLabel(conversation, SALES_LABELS.SOLD),
   },
+  {
+    id: 'lost',
+    label: 'Perdidas',
+    icon: 'i-lucide-circle-x',
+    matches: conversation => hasLabel(conversation, SALES_LABELS.LOST),
+  },
 ];
 
 export const SALES_STAGE_ACTIONS = [
@@ -155,6 +161,9 @@ export function getSalesMetrics(conversations) {
     stale: conversations.filter(isConversationStale).length,
     sold: conversations.filter(conversation =>
       hasLabel(conversation, SALES_LABELS.SOLD)
+    ).length,
+    lost: conversations.filter(conversation =>
+      hasLabel(conversation, SALES_LABELS.LOST)
     ).length,
   };
 }

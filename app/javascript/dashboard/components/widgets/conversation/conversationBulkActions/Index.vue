@@ -8,7 +8,6 @@ import wootConstants from 'dashboard/constants/globals';
 import {
   CMD_BULK_ACTION_SNOOZE_CONVERSATION,
   CMD_BULK_ACTION_REOPEN_CONVERSATION,
-  CMD_BULK_ACTION_RESOLVE_CONVERSATION,
 } from 'dashboard/helper/commandbar/events';
 
 import NextButton from 'dashboard/components-next/button/Button.vue';
@@ -33,10 +32,6 @@ const props = defineProps({
     default: () => [],
   },
   showOpenAction: {
-    type: Boolean,
-    default: false,
-  },
-  showResolvedAction: {
     type: Boolean,
     default: false,
   },
@@ -77,10 +72,6 @@ function onCmdReopenConversation() {
   onUpdateConversations('open', null);
 }
 
-function onCmdResolveConversation() {
-  onUpdateConversations('resolved', null);
-}
-
 function customSnoozeTime(customSnoozedTime) {
   showCustomTimeSnoozeModal.value = false;
   if (customSnoozedTime) {
@@ -103,13 +94,11 @@ const allSelected = computed({
 onMounted(() => {
   emitter.on(CMD_BULK_ACTION_SNOOZE_CONVERSATION, onCmdSnoozeConversation);
   emitter.on(CMD_BULK_ACTION_REOPEN_CONVERSATION, onCmdReopenConversation);
-  emitter.on(CMD_BULK_ACTION_RESOLVE_CONVERSATION, onCmdResolveConversation);
 });
 
 onUnmounted(() => {
   emitter.off(CMD_BULK_ACTION_SNOOZE_CONVERSATION, onCmdSnoozeConversation);
   emitter.off(CMD_BULK_ACTION_REOPEN_CONVERSATION, onCmdReopenConversation);
-  emitter.off(CMD_BULK_ACTION_RESOLVE_CONVERSATION, onCmdResolveConversation);
 });
 </script>
 
@@ -162,7 +151,7 @@ onUnmounted(() => {
         <div class="flex items-center gap-2">
           <BulkLabelActions @assign="onAssignLabels" />
           <BulkUpdateActions
-            :show-resolve="!showResolvedAction"
+            :show-resolve="false"
             :show-reopen="!showOpenAction"
             :show-snooze="!showSnoozedAction"
             @update="onUpdateConversations"
