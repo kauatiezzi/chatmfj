@@ -240,6 +240,17 @@ const setConversationStatus = status => {
   });
 };
 
+const clearAssignedAgent = async () => {
+  store.dispatch('setCurrentChatAssignee', {
+    conversationId: currentChat.value?.id,
+    assignee: null,
+  });
+  await store.dispatch('assignAgent', {
+    conversationId: currentChat.value?.id,
+    agentId: null,
+  });
+};
+
 const setSalesStage = async labelTitle => {
   await setSalesLabel(labelTitle);
 
@@ -250,6 +261,7 @@ const setSalesStage = async labelTitle => {
   }
 
   if (labelTitle === SALES_LABELS.LOST) {
+    await clearAssignedAgent();
     await setConversationStatus(wootConstants.STATUS_TYPE.RESOLVED);
     useAlert('Conversa marcada como perdida.');
   }
