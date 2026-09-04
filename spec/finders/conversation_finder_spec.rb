@@ -72,8 +72,13 @@ describe ConversationFinder do
     context 'with assignee_type all' do
       let(:params) { { assignee_type: 'all' } }
 
-      it 'filter conversations by assignee type all' do
+      it 'limits regular agents to their assigned conversations' do
         result = conversation_finder.perform
+        expect(result[:conversations].length).to be 2
+      end
+
+      it 'filter conversations by assignee type all for admins' do
+        result = described_class.new(admin, params).perform
         expect(result[:conversations].length).to be 4
       end
     end
@@ -81,8 +86,13 @@ describe ConversationFinder do
     context 'with assignee_type unassigned' do
       let(:params) { { assignee_type: 'unassigned' } }
 
-      it 'filter conversations by assignee type unassigned' do
+      it 'limits regular agents to their assigned conversations' do
         result = conversation_finder.perform
+        expect(result[:conversations].length).to be 2
+      end
+
+      it 'filter conversations by assignee type unassigned for admins' do
+        result = described_class.new(admin, params).perform
         expect(result[:conversations].length).to be 1
       end
     end
@@ -90,8 +100,13 @@ describe ConversationFinder do
     context 'with status all' do
       let(:params) { { status: 'all' } }
 
-      it 'returns all conversations' do
+      it 'returns all conversations assigned to regular agents' do
         result = conversation_finder.perform
+        expect(result[:conversations].length).to be 3
+      end
+
+      it 'returns all conversations for admins' do
+        result = described_class.new(admin, params).perform
         expect(result[:conversations].length).to be 5
       end
     end
@@ -99,8 +114,13 @@ describe ConversationFinder do
     context 'with assignee_type assigned' do
       let(:params) { { assignee_type: 'assigned' } }
 
-      it 'filter conversations by assignee type assigned' do
+      it 'limits regular agents to their assigned conversations' do
         result = conversation_finder.perform
+        expect(result[:conversations].length).to be 2
+      end
+
+      it 'filter conversations by assignee type assigned for admins' do
+        result = described_class.new(admin, params).perform
         expect(result[:conversations].length).to be 3
       end
 
@@ -119,9 +139,9 @@ describe ConversationFinder do
       let(:team) { create(:team, account: account) }
       let(:params) { { team_id: team.id } }
 
-      it 'filter conversations by team' do
+      it 'filter conversations by team for admins' do
         create(:conversation, account: account, inbox: inbox, team: team)
-        result = conversation_finder.perform
+        result = described_class.new(admin, params).perform
         expect(result[:conversations].length).to be 1
       end
     end
@@ -150,8 +170,13 @@ describe ConversationFinder do
     context 'without source' do
       let(:params) { {} }
 
-      it 'returns conversations with any source' do
+      it 'returns assigned conversations with any source for regular agents' do
         result = conversation_finder.perform
+        expect(result[:conversations].length).to be 2
+      end
+
+      it 'returns conversations with any source for admins' do
+        result = described_class.new(admin, params).perform
         expect(result[:conversations].length).to be 4
       end
     end
@@ -170,7 +195,7 @@ describe ConversationFinder do
         conversations[0..27].each do |conversation|
           conversation.update(updated_at: Time.now.utc - 10.seconds)
         end
-        result = conversation_finder.perform
+        result = described_class.new(admin, params).perform
         # pagination is not applied
         # filters are applied
         # modified conversations + 1 conversation created during set up

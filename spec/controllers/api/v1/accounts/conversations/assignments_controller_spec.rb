@@ -36,6 +36,7 @@ RSpec.describe 'Conversation Assignment API', type: :request do
 
     context 'when it is an authenticated user with access to the inbox' do
       let(:agent) { create(:user, account: account, role: :agent) }
+      let(:another_agent) { create(:user, account: account, role: :agent) }
       let(:agent_bot) { create(:agent_bot, account: account) }
       let(:team) { create(:team, account: account) }
 
@@ -55,26 +56,32 @@ RSpec.describe 'Conversation Assignment API', type: :request do
         expect(conversation.reload.assignee).to eq(agent)
       end
 
-      it 'assigns an agent bot to the conversation' do
-        params = { assignee_id: agent_bot.id, assignee_type: 'AgentBot' }
-
-        expect(Conversations::AssignmentService).to receive(:new)
-          .with(hash_including(conversation: conversation, assignee_id: agent_bot.id, assignee_type: 'AgentBot'))
-          .and_call_original
+      it 'does not assign the conversation to another agent' do
+        create(:inbox_member, inbox: conversation.inbox, user: another_agent)
+        params = { assignee_id: another_agent.id }
 
         post api_v1_account_conversation_assignments_url(account_id: account.id, conversation_id: conversation.display_id),
              params: params,
              headers: agent.create_new_auth_token,
              as: :json
 
-        expect(response).to have_http_status(:success)
-        expect(response.parsed_body['name']).to eq(agent_bot.name)
-        conversation.reload
-        expect(conversation.assignee_agent_bot).to eq(agent_bot)
-        expect(conversation.assignee).to be_nil
+        expect(response).to have_http_status(:forbidden)
+        expect(conversation.reload.assignee).to be_nil
       end
 
-      it 'assigns a team to the conversation' do
+      it 'does not assign an agent bot to the conversation' do
+        params = { assignee_id: agent_bot.id, assignee_type: 'AgentBot' }
+
+        post api_v1_account_conversation_assignments_url(account_id: account.id, conversation_id: conversation.display_id),
+             params: params,
+             headers: agent.create_new_auth_token,
+             as: :json
+
+        expect(response).to have_http_status(:forbidden)
+        expect(conversation.reload.assignee_agent_bot).to be_nil
+      end
+
+      it 'does not assign a team to the conversation' do
         team_member = create(:user, account: account, role: :agent, auto_offline: false)
         create(:inbox_member, inbox: conversation.inbox, user: team_member)
         create(:team_member, team: team, user: team_member)
@@ -85,10 +92,66 @@ RSpec.describe 'Conversation Assignment API', type: :request do
              headers: agent.create_new_auth_token,
              as: :json
 
+        expect(response).to have_http_status(:forbidden)
+        expect(conversation.reload.team).to be_nil
+        expect(conversation.reload.assignee).to be_nil
+      end
+    end
+
+    context 'when it is an authenticated administrator with access to the inbox' do
+      let(:administrator) { create(:user, account: account, role: :administrator) }
+      let(:agent) { create(:user, account: account, role: :agent, auto_offline: false) }
+      let(:agent_bot) { create(:agent_bot, account: account) }
+      let(:team) { create(:team, account: account) }
+
+      before do
+        create(:inbox_member, inbox: conversation.inbox, user: administrator)
+        create(:inbox_member, inbox: conversation.inbox, user: agent)
+      end
+
+      it 'assigns a user to the conversation' do
+        params = { assignee_id: agent.id }
+
+        post api_v1_account_conversation_assignments_url(account_id: account.id, conversation_id: conversation.display_id),
+             params: params,
+             headers: administrator.create_new_auth_token,
+             as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(conversation.reload.assignee).to eq(agent)
+      end
+
+      it 'assigns an agent bot to the conversation' do
+        params = { assignee_id: agent_bot.id, assignee_type: 'AgentBot' }
+
+        expect(Conversations::AssignmentService).to receive(:new)
+          .with(hash_including(conversation: conversation, assignee_id: agent_bot.id, assignee_type: 'AgentBot'))
+          .and_call_original
+
+        post api_v1_account_conversation_assignments_url(account_id: account.id, conversation_id: conversation.display_id),
+             params: params,
+             headers: administrator.create_new_auth_token,
+             as: :json
+
+        expect(response).to have_http_status(:success)
+        expect(response.parsed_body['name']).to eq(agent_bot.name)
+        conversation.reload
+        expect(conversation.assignee_agent_bot).to eq(agent_bot)
+        expect(conversation.assignee).to be_nil
+      end
+
+      it 'assigns a team to the conversation' do
+        create(:team_member, team: team, user: agent)
+        params = { team_id: team.id }
+
+        post api_v1_account_conversation_assignments_url(account_id: account.id, conversation_id: conversation.display_id),
+             params: params,
+             headers: administrator.create_new_auth_token,
+             as: :json
+
         expect(response).to have_http_status(:success)
         expect(conversation.reload.team).to eq(team)
-        # assignee will be from team
-        expect(conversation.reload.assignee).to eq(team_member)
+        expect(conversation.reload.assignee).to eq(agent)
       end
     end
 

@@ -216,6 +216,9 @@ export default {
       // Don't show snooze if the conversation is already snoozed/resolved/pending
       return this.status === wootConstants.STATUS_TYPE.OPEN;
     },
+    canAssignConversations() {
+      return this.isAdmin;
+    },
   },
   mounted() {
     this.$store.dispatch('inboxAssignableAgents/fetch', [this.inboxId]);
@@ -317,7 +320,7 @@ export default {
       <hr class="m-1 rounded border-b border-n-weak dark:border-n-weak" />
     </template>
     <template
-      v-if="isAllowed([MENU.PRIORITY, MENU.LABEL, MENU.AGENT, MENU.TEAM])"
+      v-if="isAllowed([MENU.PRIORITY, MENU.LABEL]) || canAssignConversations"
     >
       <MenuItemWithSubmenu
         v-if="isAllowed([MENU.PRIORITY])"
@@ -352,7 +355,7 @@ export default {
         />
       </MenuItemWithSubmenu>
       <MenuItemWithSubmenu
-        v-if="isAllowed([MENU.AGENT])"
+        v-if="canAssignConversations && isAllowed([MENU.AGENT])"
         :option="agentMenuConfig"
         :sub-menu-available="!!assignableAgents.length"
       >
@@ -368,7 +371,7 @@ export default {
         </template>
       </MenuItemWithSubmenu>
       <MenuItemWithSubmenu
-        v-if="isAllowed([MENU.TEAM])"
+        v-if="canAssignConversations && isAllowed([MENU.TEAM])"
         :option="teamMenuConfig"
         :sub-menu-available="!!teams.length"
       >

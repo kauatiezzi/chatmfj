@@ -1,4 +1,6 @@
 class Api::V1::Accounts::Conversations::AssignmentsController < Api::V1::Accounts::Conversations::BaseController
+  before_action :ensure_assignment_allowed
+
   # assigns agent/team to a conversation
   def create
     if params.key?(:assignee_id) || agent_bot_assignment?
@@ -11,6 +13,27 @@ class Api::V1::Accounts::Conversations::AssignmentsController < Api::V1::Account
   end
 
   private
+
+  def ensure_assignment_allowed
+    return if Current.user.is_a?(AgentBot)
+    return if Current.account_user&.administrator?
+    return if permitted_agent_assignment?
+    return if permitted_team_assignment?
+
+    head :forbidden
+  end
+
+  def permitted_agent_assignment?
+    return false unless params.key?(:assignee_id)
+    return true if params[:assignee_id].blank?
+    return false if agent_bot_assignment?
+
+    params[:assignee_id].to_i == Current.user.id
+  end
+
+  def permitted_team_assignment?
+    params.key?(:team_id) && params[:team_id].to_i.zero?
+  end
 
   def set_agent
     resource = Conversations::AssignmentService.new(

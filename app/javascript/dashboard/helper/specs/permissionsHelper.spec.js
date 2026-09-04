@@ -4,6 +4,7 @@ import {
   hasPermissions,
   filterItemsByPermission,
 } from '../permissionsHelper';
+import { ASSIGNEE_TYPE_TAB_PERMISSIONS } from '../../constants/permissions';
 
 describe('#getCurrentAccount', () => {
   it('should return the current account', () => {
@@ -149,5 +150,29 @@ describe('filterItemsByPermission', () => {
     expect(result).toContainEqual(
       expect.objectContaining({ key: 'item1', name: 'Item 1' })
     );
+  });
+});
+
+describe('ASSIGNEE_TYPE_TAB_PERMISSIONS', () => {
+  const getPermissions = item => item.permissions;
+
+  it('shows only the mine tab to regular agents', () => {
+    const result = filterItemsByPermission(
+      ASSIGNEE_TYPE_TAB_PERMISSIONS,
+      ['agent'],
+      getPermissions
+    );
+
+    expect(result.map(item => item.key)).toEqual(['me']);
+  });
+
+  it('keeps unassigned and all tabs available to administrators', () => {
+    const result = filterItemsByPermission(
+      ASSIGNEE_TYPE_TAB_PERMISSIONS,
+      ['administrator'],
+      getPermissions
+    );
+
+    expect(result.map(item => item.key)).toEqual(['me', 'unassigned', 'all']);
   });
 });

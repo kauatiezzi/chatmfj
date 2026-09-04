@@ -97,6 +97,13 @@ class ConversationFinder
 
   def set_assignee_type
     @assignee_type = params[:assignee_type]
+    @assignee_type = 'me' if limited_agent_conversation_view?
+  end
+
+  def limited_agent_conversation_view?
+    return false if @is_admin
+
+    @assignee_type.blank? || %w[all unassigned assigned].include?(@assignee_type.to_s)
   end
 
   def set_team

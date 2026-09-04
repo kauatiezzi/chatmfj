@@ -9,6 +9,7 @@ import ConversationLabels from './labels/LabelBox.vue';
 import { CONVERSATION_PRIORITY } from '../../../../shared/constants/messages';
 import { CONVERSATION_EVENTS } from '../../../helper/AnalyticsHelper/events';
 import { useTrack } from 'dashboard/composables';
+import { useAdmin } from 'dashboard/composables/useAdmin';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 
 export default {
@@ -26,8 +27,10 @@ export default {
   },
   setup() {
     const { agentsList } = useAgentsList();
+    const { isAdmin } = useAdmin();
     return {
       agentsList,
+      isAdmin,
     };
   },
   data() {
@@ -231,6 +234,7 @@ export default {
         </template>
       </ContactDetailsItem>
       <MultiselectDropdown
+        v-if="isAdmin"
         :options="agentsList"
         :selected-item="assignedAgent"
         :multiselector-title="$t('AGENT_MGMT.MULTI_SELECTOR.TITLE.AGENT')"
@@ -244,7 +248,7 @@ export default {
         @select="onClickAssignAgent"
       />
     </div>
-    <div>
+    <div v-if="isAdmin">
       <ContactDetailsItem
         compact
         :title="$t('CONVERSATION_SIDEBAR.TEAM_LABEL')"
