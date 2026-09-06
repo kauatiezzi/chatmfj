@@ -1,9 +1,13 @@
 class AutoAssignment::AssignmentService
   pattr_initialize [:inbox!]
 
+  BOT_IDLE_HANDOFF_AFTER = 5.minutes
+  PLATFORM_LABELS = %w[scorm score scores plataforma plataformas].freeze
+  PLATFORM_AGENT_EMAIL = 'agendamento@mfjtreinamentos.com.br'
+
   def perform_bulk_assignment(limit: 100)
     return 0 unless inbox.auto_assignment_v2_enabled?
-    return 0 unless inbox.enable_auto_assignment?
+    return 0 unless assignment_enabled?
 
     assigned_count = 0
 
@@ -32,6 +36,11 @@ class AutoAssignment::AssignmentService
 
   def unassigned_conversations(limit)
     scope = inbox.conversations.unassigned.open
+    scope = if inbox.enable_auto_assignment?
+              scope.where('assignee_agent_bot_id IS NULL OR last_activity_at <= ?', BOT_IDLE_HANDOFF_AFTER.ago)
+            else
+              scope.where(disabled_assignment_handoff_query, BOT_IDLE_HANDOFF_AFTER.ago, *platform_label_patterns)
+            end
 
     # Apply conversation priority using assignment policy if available
     policy = inbox.assignment_policy
@@ -45,13 +54,74 @@ class AutoAssignment::AssignmentService
   end
 
   def find_available_agent(conversation = nil)
-    agents = filter_agents_by_team(inbox.available_agents, conversation)
+    platform_agent = preferred_platform_agent(conversation)
+    return platform_agent if platform_agent
+
+    agents = filter_agents_by_team(agent_pool, conversation)
     return nil if agents.nil?
 
     agents = filter_agents_by_rate_limit(agents)
     return nil if agents.empty?
 
     round_robin_selector.select_agent(agents)
+  end
+
+  def preferred_platform_agent(conversation)
+    return unless platform_conversation?(conversation)
+
+    platform_agent_members.find { |agent_member| platform_agent?(agent_member.user) }&.user
+  end
+
+  def platform_agent_members
+    inbox.inbox_members.includes(:user)
+  end
+
+  def assignment_enabled?
+    inbox.enable_auto_assignment? || idle_bot_conversations? || platform_conversations?
+  end
+
+  def idle_bot_conversations?
+    inbox.conversations.unassigned.open
+         .where.not(assignee_agent_bot_id: nil)
+         .where('last_activity_at <= ?', BOT_IDLE_HANDOFF_AFTER.ago)
+         .exists?
+  end
+
+  def platform_conversations?
+    inbox.conversations.unassigned.open
+         .where(platform_label_query, *platform_label_patterns)
+         .exists?
+  end
+
+  def agent_pool
+    return inbox.available_agents if inbox.enable_auto_assignment?
+
+    inbox.inbox_members.includes(:user)
+  end
+
+  def disabled_assignment_handoff_query
+    "(assignee_agent_bot_id IS NOT NULL AND last_activity_at <= ?) OR #{platform_label_query}"
+  end
+
+  def platform_label_query
+    PLATFORM_LABELS.map { "LOWER(COALESCE(cached_label_list, '')) LIKE ?" }.join(' OR ')
+  end
+
+  def platform_label_patterns
+    PLATFORM_LABELS.map { |label| "%#{label}%" }
+  end
+
+  def platform_conversation?(conversation)
+    conversation&.label_list&.any? { |label| PLATFORM_LABELS.include?(normalize_label(label)) }
+  end
+
+  def platform_agent?(agent)
+    agent.email.to_s.casecmp?(PLATFORM_AGENT_EMAIL) ||
+      I18n.transliterate(agent.name.to_s).downcase.include?('kauan')
+  end
+
+  def normalize_label(label)
+    I18n.transliterate(label.to_s).downcase.tr('-', '_')
   end
 
   def filter_agents_by_team(agents, conversation)

@@ -33,6 +33,7 @@ RSpec.describe 'Api::V1::Accounts::BulkActionsController', type: :request do
 
     context 'when it is an authenticated user' do
       let!(:agent) { create(:user, account: account, role: :agent) }
+      let!(:admin) { create(:user, account: account, role: :administrator) }
 
       it 'Ignores bulk_actions for wrong type' do
         post "/api/v1/accounts/#{account.id}/bulk_actions",
@@ -85,7 +86,7 @@ RSpec.describe 'Api::V1::Accounts::BulkActionsController', type: :request do
 
         perform_enqueued_jobs do
           post "/api/v1/accounts/#{account.id}/bulk_actions",
-               headers: agent.create_new_auth_token,
+               headers: admin.create_new_auth_token,
                params: params
 
           expect(response).to have_http_status(:success)
@@ -95,7 +96,17 @@ RSpec.describe 'Api::V1::Accounts::BulkActionsController', type: :request do
 
         last_activity_message = Conversation.last.messages.activity.last
 
-        expect(last_activity_message.content).to eq("Assigned to #{team_1.name} by #{agent.name}")
+        expect(last_activity_message.content).to eq("Assigned to #{team_1.name} by #{admin.name}")
+      end
+
+      it 'blocks regular agents from assigning conversations to a team in bulk' do
+        params = { type: 'Conversation', fields: { team_id: team_1.id }, ids: Conversation.last(2).pluck(:display_id) }
+
+        post "/api/v1/accounts/#{account.id}/bulk_actions",
+             headers: agent.create_new_auth_token,
+             params: params
+
+        expect(response).to have_http_status(:forbidden)
       end
 
       it 'Bulk update conversation assignee id' do
@@ -107,7 +118,7 @@ RSpec.describe 'Api::V1::Accounts::BulkActionsController', type: :request do
 
         perform_enqueued_jobs do
           post "/api/v1/accounts/#{account.id}/bulk_actions",
-               headers: agent.create_new_auth_token,
+               headers: admin.create_new_auth_token,
                params: params
 
           expect(response).to have_http_status(:success)
@@ -116,6 +127,16 @@ RSpec.describe 'Api::V1::Accounts::BulkActionsController', type: :request do
         expect(Conversation.first.assignee_id).to eq(agent_1.id)
         expect(Conversation.second.assignee_id).to eq(agent_1.id)
         expect(Conversation.first.status).to eq('open')
+      end
+
+      it 'blocks regular agents from assigning conversations to another agent in bulk' do
+        params = { type: 'Conversation', fields: { assignee_id: agent_1.id }, ids: Conversation.first(3).pluck(:display_id) }
+
+        post "/api/v1/accounts/#{account.id}/bulk_actions",
+             headers: agent.create_new_auth_token,
+             params: params
+
+        expect(response).to have_http_status(:forbidden)
       end
 
       it 'Bulk remove assignee id from conversations' do
@@ -166,7 +187,7 @@ RSpec.describe 'Api::V1::Accounts::BulkActionsController', type: :request do
 
         perform_enqueued_jobs do
           post "/api/v1/accounts/#{account.id}/bulk_actions",
-               headers: agent.create_new_auth_token,
+               headers: admin.create_new_auth_token,
                params: params
 
           expect(response).to have_http_status(:success)

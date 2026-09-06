@@ -94,6 +94,54 @@ RSpec.describe AutoAssignment::AssignmentService do
         expect(unassigned_conversation.reload.assignee).to eq(agent)
       end
 
+      it 'assigns bot-handled conversations that have been idle for at least five minutes' do
+        agent_bot = create(:agent_bot, account: account)
+        bot_conversation = create(
+          :conversation,
+          inbox: inbox,
+          status: 'open',
+          assignee: nil,
+          assignee_agent_bot: agent_bot,
+          last_activity_at: 6.minutes.ago
+        )
+
+        assigned_count = service.perform_bulk_assignment(limit: 1)
+
+        expect(assigned_count).to eq(1)
+        expect(bot_conversation.reload.assignee).to eq(agent)
+        expect(bot_conversation.assignee_agent_bot).to be_nil
+      end
+
+      it 'keeps recently active bot-handled conversations with the bot' do
+        agent_bot = create(:agent_bot, account: account)
+        bot_conversation = create(
+          :conversation,
+          inbox: inbox,
+          status: 'open',
+          assignee: nil,
+          assignee_agent_bot: agent_bot,
+          last_activity_at: 4.minutes.ago
+        )
+
+        assigned_count = service.perform_bulk_assignment(limit: 1)
+
+        expect(assigned_count).to eq(0)
+        expect(bot_conversation.reload.assignee).to be_nil
+        expect(bot_conversation.assignee_agent_bot).to eq(agent_bot)
+      end
+
+      it 'routes SCORM conversations to Kauan when he belongs to the inbox' do
+        kauan = create(:user, account: account, role: :agent, name: 'Kauan Brandao')
+        create(:inbox_member, inbox: inbox, user: kauan)
+        scorm_conversation = create(:conversation, inbox: inbox, status: 'open', assignee: nil)
+        scorm_conversation.add_labels(['scorm'])
+
+        assigned_count = service.perform_bulk_assignment(limit: 1)
+
+        expect(assigned_count).to eq(1)
+        expect(scorm_conversation.reload.assignee).to eq(kauan)
+      end
+
       it 'dispatches assignee changed event' do
         conversation # ensure it exists
         conversation.update!(assignee_id: nil)
@@ -111,13 +159,66 @@ RSpec.describe AutoAssignment::AssignmentService do
     end
 
     context 'when auto assignment is disabled' do
-      before { assignment_policy.update!(enabled: false) }
+      before { inbox.update!(enable_auto_assignment: false) }
 
       it 'returns 0 without processing' do
         assigned_count = service.perform_bulk_assignment(limit: 10)
 
         expect(assigned_count).to eq(0)
         expect(conversation.reload.assignee).to be_nil
+      end
+    end
+
+    context 'when inbox auto assignment is disabled' do
+      let(:rate_limiter) { instance_double(AutoAssignment::RateLimiter) }
+      let(:agent_bot) { create(:agent_bot, account: account) }
+
+      before do
+        inbox.update!(enable_auto_assignment: false)
+        allow(AutoAssignment::RateLimiter).to receive(:new).and_return(rate_limiter)
+        allow(rate_limiter).to receive(:within_limit?).and_return(true)
+        allow(rate_limiter).to receive(:track_assignment)
+
+        round_robin_selector = instance_double(AutoAssignment::RoundRobinSelector)
+        allow(AutoAssignment::RoundRobinSelector).to receive(:new).and_return(round_robin_selector)
+        allow(round_robin_selector).to receive(:select_agent).and_return(agent)
+      end
+
+      it 'does not assign regular unassigned conversations' do
+        conversation.update!(assignee_id: nil)
+
+        assigned_count = service.perform_bulk_assignment(limit: 1)
+
+        expect(assigned_count).to eq(0)
+        expect(conversation.reload.assignee).to be_nil
+      end
+
+      it 'assigns idle bot-handled conversations' do
+        bot_conversation = create(
+          :conversation,
+          inbox: inbox,
+          status: 'open',
+          assignee: nil,
+          assignee_agent_bot: agent_bot,
+          last_activity_at: 6.minutes.ago
+        )
+
+        assigned_count = service.perform_bulk_assignment(limit: 1)
+
+        expect(assigned_count).to eq(1)
+        expect(bot_conversation.reload.assignee).to eq(agent)
+      end
+
+      it 'routes unassigned SCORM conversations to Kauan' do
+        kauan = create(:user, account: account, role: :agent, name: 'Kauan Brandao')
+        create(:inbox_member, inbox: inbox, user: kauan)
+        scorm_conversation = create(:conversation, inbox: inbox, status: 'open', assignee: nil)
+        scorm_conversation.add_labels(['scorm'])
+
+        assigned_count = service.perform_bulk_assignment(limit: 1)
+
+        expect(assigned_count).to eq(1)
+        expect(scorm_conversation.reload.assignee).to eq(kauan)
       end
     end
 

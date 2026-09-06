@@ -40,9 +40,9 @@ RSpec.describe ConversationPolicy, type: :policy do
       end
     end
 
-    context 'when agent has inbox access' do
+    context 'when conversation is assigned to the agent' do
       let(:inbox) { create(:inbox, account: account) }
-      let(:conversation) { create(:conversation, account: account, inbox: inbox) }
+      let(:conversation) { create(:conversation, account: account, inbox: inbox, assignee: agent) }
 
       before { create(:inbox_member, user: agent, inbox: inbox) }
 
@@ -51,14 +51,25 @@ RSpec.describe ConversationPolicy, type: :policy do
       end
     end
 
-    context 'when agent has team access' do
+    context 'when agent only has inbox access' do
+      let(:inbox) { create(:inbox, account: account) }
+      let(:conversation) { create(:conversation, account: account, inbox: inbox) }
+
+      before { create(:inbox_member, user: agent, inbox: inbox) }
+
+      it 'denies access' do
+        expect(subject).not_to permit(agent_context, conversation)
+      end
+    end
+
+    context 'when agent only has team access' do
       let(:team) { create(:team, account: account) }
       let(:conversation) { create(:conversation, :with_team, account: account, team: team) }
 
       before { create(:team_member, team: team, user: agent) }
 
-      it 'allows access' do
-        expect(subject).to permit(agent_context, conversation)
+      it 'denies access' do
+        expect(subject).not_to permit(agent_context, conversation)
       end
     end
 

@@ -2,6 +2,8 @@ class Api::V1::Accounts::BulkActionsController < Api::V1::Accounts::BaseControll
   def create
     case normalized_type
     when 'Conversation'
+      return head :forbidden unless conversation_bulk_action_allowed?
+
       enqueue_conversation_job
       head :ok
     when 'Contact'
@@ -51,6 +53,27 @@ class Api::V1::Accounts::BulkActionsController < Api::V1::Accounts::BaseControll
       fields: [:status, :assignee_id, :team_id]
     )
     append_common_bulk_attributes(base)
+  end
+
+  def conversation_bulk_action_allowed?
+    return true if Current.account_user&.administrator?
+
+    !assigning_other_agent? && !assigning_team?
+  end
+
+  def assigning_other_agent?
+    return false unless conversation_fields.key?(:assignee_id) || conversation_fields.key?('assignee_id')
+    return false if conversation_fields[:assignee_id].blank?
+
+    conversation_fields[:assignee_id].to_i != Current.user.id
+  end
+
+  def assigning_team?
+    (conversation_fields.key?(:team_id) || conversation_fields.key?('team_id')) && conversation_fields[:team_id].to_i.positive?
+  end
+
+  def conversation_fields
+    @conversation_fields ||= params[:fields] || {}
   end
 
   def contact_params

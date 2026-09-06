@@ -15,7 +15,10 @@ module Enterprise::AutoAssignment::AssignmentService
 
   # Extend agent finding to add capacity checks
   def find_available_agent(conversation = nil)
-    agents = filter_agents_by_team(inbox.available_agents, conversation)
+    platform_agent = preferred_platform_agent(conversation)
+    return platform_agent if platform_agent
+
+    agents = filter_agents_by_team(agent_pool, conversation)
     return nil if agents.nil?
 
     agents = filter_agents_by_rate_limit(agents)
@@ -58,6 +61,11 @@ module Enterprise::AutoAssignment::AssignmentService
   # Override to apply exclusion rules
   def unassigned_conversations(limit)
     scope = inbox.conversations.unassigned.open
+    scope = if inbox.enable_auto_assignment?
+              scope.where('assignee_agent_bot_id IS NULL OR last_activity_at <= ?', self.class::BOT_IDLE_HANDOFF_AFTER.ago)
+            else
+              scope.where(disabled_assignment_handoff_query, self.class::BOT_IDLE_HANDOFF_AFTER.ago, *platform_label_patterns)
+            end
 
     # Apply exclusion rules from capacity policy or assignment policy
     scope = apply_exclusion_rules(scope)

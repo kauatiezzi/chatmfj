@@ -9,8 +9,9 @@ class Conversations::PermissionFilterService
 
   def perform
     return conversations if user_role == 'administrator'
+    return conversations if user.is_a?(AgentBot)
 
-    accessible_conversations
+    accessible_conversations.assigned_to(user)
   end
 
   private

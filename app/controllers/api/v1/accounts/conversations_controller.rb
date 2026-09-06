@@ -5,6 +5,7 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
 
   before_action :conversation, except: [:index, :meta, :search, :create, :filter]
   before_action :inbox, :contact, :contact_inbox, only: [:create]
+  before_action :ensure_create_assignment_allowed, only: [:create]
 
   ATTACHMENT_RESULTS_PER_PAGE = 100
 
@@ -149,6 +150,21 @@ class Api::V1::Accounts::ConversationsController < Api::V1::Accounts::BaseContro
   def permitted_update_params
     # TODO: Move the other conversation attributes to this method and remove specific endpoints for each attribute
     params.permit(:priority)
+  end
+
+  def ensure_create_assignment_allowed
+    return if Current.account_user&.administrator?
+    return if create_assignee_allowed? && create_team_allowed?
+
+    head :forbidden
+  end
+
+  def create_assignee_allowed?
+    params[:assignee_id].blank? || params[:assignee_id].to_i == Current.user.id
+  end
+
+  def create_team_allowed?
+    params[:team_id].blank? || params[:team_id].to_i.zero?
   end
 
   def attachment_params

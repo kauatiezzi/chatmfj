@@ -19,11 +19,10 @@ RSpec.describe AutoAssignment::PeriodicAssignmentJob, type: :job do
         allow(Account).to receive(:find_in_batches).and_yield([account])
       end
 
-      context 'when inbox has assignment policy or auto assignment enabled' do
+      context 'when account has inboxes' do
         before do
           inbox_relation = instance_double(ActiveRecord::Relation)
           allow(account).to receive(:inboxes).and_return(inbox_relation)
-          allow(inbox_relation).to receive(:joins).with(:assignment_policy).and_return(inbox_relation)
           allow(inbox_relation).to receive(:find_in_batches).and_yield([inbox])
         end
 
@@ -46,7 +45,6 @@ RSpec.describe AutoAssignment::PeriodicAssignmentJob, type: :job do
 
           inbox_relation2 = instance_double(ActiveRecord::Relation)
           allow(account2).to receive(:inboxes).and_return(inbox_relation2)
-          allow(inbox_relation2).to receive(:joins).with(:assignment_policy).and_return(inbox_relation2)
           allow(inbox_relation2).to receive(:find_in_batches).and_yield([inbox2])
 
           allow(Account).to receive(:find_in_batches).and_yield([account]).and_yield([account2])
@@ -59,13 +57,10 @@ RSpec.describe AutoAssignment::PeriodicAssignmentJob, type: :job do
       end
 
       context 'when inbox does not have assignment policy or auto assignment enabled' do
-        before do
-          inbox.update!(enable_auto_assignment: false)
-          InboxAssignmentPolicy.where(inbox: inbox).destroy_all
-        end
+        before { inbox.update!(enable_auto_assignment: false) }
 
-        it 'does not queue assignment job' do
-          expect(AutoAssignment::AssignmentJob).not_to receive(:perform_later)
+        it 'still queues assignment job so idle bot conversations can hand off' do
+          expect(AutoAssignment::AssignmentJob).to receive(:perform_later).with(inbox_id: inbox.id)
 
           described_class.new.perform
         end
@@ -98,7 +93,6 @@ RSpec.describe AutoAssignment::PeriodicAssignmentJob, type: :job do
 
           inbox_relation = instance_double(ActiveRecord::Relation)
           allow(acc).to receive(:inboxes).and_return(inbox_relation)
-          allow(inbox_relation).to receive(:joins).with(:assignment_policy).and_return(inbox_relation)
           allow(inbox_relation).to receive(:find_in_batches).and_yield([inb])
 
           accounts << acc

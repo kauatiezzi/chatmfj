@@ -399,10 +399,20 @@ RSpec.describe 'Conversations API', type: :request do
                as: :json
         end
 
-        it 'creates a new conversation with assignee and team' do
-          allow(Rails.configuration.dispatcher).to receive(:dispatch)
+        it 'blocks regular agents from creating a conversation assigned to a team' do
           post "/api/v1/accounts/#{account.id}/conversations",
                headers: agent.create_new_auth_token,
+               params: { source_id: contact_inbox.source_id, contact_id: contact.id, inbox_id: inbox.id, assignee_id: agent.id, team_id: team.id },
+               as: :json
+
+          expect(response).to have_http_status(:forbidden)
+        end
+
+        it 'creates a new conversation with assignee and team for administrators' do
+          admin = create(:user, account: account, role: :administrator)
+          allow(Rails.configuration.dispatcher).to receive(:dispatch)
+          post "/api/v1/accounts/#{account.id}/conversations",
+               headers: admin.create_new_auth_token,
                params: { source_id: contact_inbox.source_id, contact_id: contact.id, inbox_id: inbox.id, assignee_id: agent.id, team_id: team.id },
                as: :json
 
